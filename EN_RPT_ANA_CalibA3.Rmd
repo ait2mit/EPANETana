@@ -1,0 +1,322 @@
+---
+title: "EN_RPT_FILE_ANA_BAS"
+author: "M.Shafiqul Islam"
+date: "Friday, March 20, 2015"
+output: html_document
+---
+####Write a basic function to Read 
+```{r}
+epanetresults<-function(fileName, objSearch, SimDur, RepInterval){
+  # Step 1:
+  
+  # This function will give node/ link results taking from EPANET *.rpt file
+  #Function takes four arguments
+  
+  #fileName=epanet *.rpt file
+  # objSearch = Node or Link for which results will be extracte
+  # SimDur= Simulation duration in Hour
+  # RepInterval = Report time steps
+  
+  
+  
+  
+#fileName="10d10mg_res.rpt"
+NorepTime=SimDur/RepInterval
+conn=file(fileName,open="r")
+on.exit(close(conn))
+linn=readLines(conn)
+
+
+totNoLines=length(linn)
+for (i in 1:length(linn)){
+    
+  mm=grepl(objSearch, linn[i]) 
+
+  if (mm){
+      NodePosi=i
+      #print(NodePosi)
+      break
+      } 
+}
+
+#close(conn)
+
+
+hd <- read.table(fileName, header = TRUE, sep = "", skip=NodePosi+1, nrow=1, fill=TRUE)
+x <- read.table(fileName, header = TRUE, sep = "", skip=NodePosi+3, nrow=NorepTime+1, fill=TRUE)
+
+names(x)<-names(hd) # Assigns Column Names by taking table heading from table "hd"
+x$Time<-c(0,1:NorepTime) # To start time from zero
+return(x)
+}
+
+```
+### Calling the previous function for EPANET " *.RPT" file processing
+```{r}
+
+#Step 2:
+#Before running this file, you must run epanetresults.R functions
+#This will give all stations results in 3d matrix
+#This section takes long time to load 
+#To plot results pls use epanet_sg_plpt script
+
+
+
+
+stnLoc<-c(35,30,19, 20, 14, 26, 33, 31, 43) 
+
+SimDur=120
+RepInterval=0.25
+NorepTime=SimDur/RepInterval
+no_Stn=9
+no_spece=7
+
+
+stations = array(0, dim=c(no_Stn,NorepTime+1,no_spece))
+
+
+for (ii in 1:length(stnLoc)){
+  staName=paste0("Stn_",stnLoc[ii],"_P")
+  
+  yy<-epanetresults("sg1_Sc4TOC1new2rA3.rpt", staName, SimDur, RepInterval)
+  
+  #function(fileName, objSearch, SimDur, RepInterval)
+  
+  
+  KK<-as.matrix(yy)
+
+  stations[ii, , ] <-KK
+  
+}
+
+
+```
+
+
+
+Observed Data Prepration
+```{r}
+library("chron")
+# Time and data for #35
+tms35<-times(c("8:30:00","10:30:00", "12:00:00"))
+dts35<-dates(c("6/23/2015", "6/23/2015","6/23/2015"))
+times35<-chron(dates=dts35, times=tms35, format = c(dates = "m/d/y", times = "h:m:s"))
+data35<-c(1.56, 1.55,1.54)
+
+
+
+
+# Time and data for #30
+tms30<-times(c("9:46:00","11:12:00","12:35:00","13:45:00"))
+dts30<-dates(c("6/23/2015", "6/23/2015","6/23/2015","6/23/2015"))
+times30<-chron(dates=dts30, times=tms30, format = c(dates = "m/d/y", times = "h:m:s"))
+data30<-c(1.51,1.57,1.54,1.49)
+
+
+
+# Time and data for #19
+tms19<-times(c("14:15:00", "14:45:00", "15:15:00", "15:45:00","16:15:00","16:45:00", "17:15:00"))
+dts19<-dates(c("6/23/2015", "6/23/2015","6/23/2015","6/23/2015", "6/23/2015","6/23/2015","6/23/2015"))
+times19<-chron(dates=dts19, times=tms19, format = c(dates = "m/d/y", times = "h:m:s"))
+data19<-c(1.53,1.51,1.48,1.54,1.50,1.48,1.50)
+
+
+# Time and data for #20
+tms20<-times(c("0:55:00", "2:35:00","4:15:00"))
+
+dts20<-dates(c("6/24/2015", "6/24/2015","6/24/2015")) # Accurate date is 6/24/2015
+#dts20<-dates(c("6/23/2015", "6/23/2015","6/23/2015")) # Accurate date is 6/24/2015
+times20<-chron(dates=dts20, times=tms20, format = c(dates = "m/d/y", times = "h:m:s"))
+data20<-c(1.29,1.12,1.00)
+
+
+# Time and data for #14
+
+tms14<-times(c("1:47:00","3:36:00","4:48:00"))
+dts14<-dates(c("6/24/2015", "6/24/2015","6/24/2015")) # Accurate date is 6/24/2015
+#dts14<-dates(c("6/23/2015", "6/23/2015","6/23/2015")) # Accurate date is 6/24/2015
+times14<-chron(dates=dts14, times=tms14, format = c(dates = "m/d/y", times = "h:m:s"))
+data14<-c(1.59,1.12,1.14)
+
+
+# Time and data for #26
+
+tms26<-times(c("11:40:00", "12:15:00","12:48:00","15:12:00"))
+dts26<-dates(c("6/24/2015", "6/24/2015","6/24/2015","6/24/2015")) # Accurate date is 6/24/2015
+#dts26<-dates(c("6/23/2015", "6/23/2015","6/23/2015","6/23/2015")) # Accurate date is 6/24/2015
+times26<-chron(dates=dts26, times=tms26, format = c(dates = "m/d/y", times = "h:m:s"))
+data26<-c(1.50,1.48,1.42,1.35)
+
+
+# Time and data for #33
+
+tms33<-times(c("9:55:00","10:25:00","10:55:00","11:30:00","12:00:00","12:30:00","13:00:00"))
+dts33<-dates(c("6/25/2015", "6/25/2015","6/25/2015","6/25/2015","6/25/2015","6/25/2015","6/25/2015")) # Accurate date is 6/24/2015
+#dts33<-dates(c("6/23/2015", "6/23/2015","6/23/2015","6/23/2015","6/23/2015","6/23/2015","6/23/2015")) # Accurate date is 6/24/2015
+times33<-chron(dates=dts33, times=tms33, format = c(dates = "m/d/y", times = "h:m:s"))
+data33<-c(0.25,0.28,0.31,0.29,0.34,0.35,0.35)
+
+
+# Time and data for #31
+
+tms31<-times(c("19:20:00","19:50:00","20:20:00","20:50:00","21:20:00","21:50:00","22:15:00"))
+dts31<-dates(c("6/25/2015", "6/25/2015","6/25/2015","6/25/2015","6/25/2015","6/25/2015","6/25/2015")) # Accurate date is 6/24/2015
+#dts31<-dates(c("6/23/2015", "6/23/2015","6/23/2015","6/23/2015","6/23/2015","6/23/2015","6/23/2015")) # Accurate date is 6/24/2015
+times31<-chron(dates=dts31, times=tms31, format = c(dates = "m/d/y", times = "h:m:s"))
+data31<-c(1.32,1.35,1.33,1.33,1.36,1.37,1.37)
+
+
+# Time and data for #43
+
+tms43<-times(c("8:30:00","9:00:00","9:30:00", "10:00:00","10:30:00","11:00:00","11:30:00","12:00:00"))
+dts43<-dates(c("6/26/2015", "6/26/2015","6/26/2015","6/26/2015","6/26/2015","6/26/2015","6/26/2015","6/26/2015")) # Accurate date is 6/24/2015
+#dts43<-dates(c("6/23/2015", "6/23/2015","6/23/2015","6/23/2015","6/23/2015","6/23/2015","6/23/2015","6/23/2015")) # Accurate date is 6/24/2015
+times43<-chron(dates=dts43, times=tms43, format = c(dates = "m/d/y", times = "h:m:s"))
+data43<-c(1.10,1.11,1.12,1.16,0.86,1.25,1.30,1.27)
+
+
+
+
+
+```
+
+
+
+
+PLotting Simulation and observation data (Specific time duration)
+```{r}
+par(mfrow=c(2,1))
+library("chron")
+# Time 23 june morning
+t1 <- chron("6/23/2015", "00:00:00")
+t2 <- chron("6/23/2015", "18:00:00")
+tt230615_1 <- seq(t1, t2, by = times("00:15:00"))
+#stnLoc<-c(35,30,19, 20, 14, 26, 33, 31, 43) 
+pp=5# plot parameter
+# Plot for Stn 35
+NH2CL35<- stations[,97:250,pp][1,]
+
+plot(tt230615_1,NH2CL35,type='l', ylim=c(0,1.7), main="NH2CL (mg/L) at Stn_35_P (Boon Keng Road)",xlab="Time", ylab="NH2CL (mg/L)")
+legend("bottomright", pch=c(1,NA), lty=c(NA,1), col=c("red","black"), legend=c("Observed","Simulated"))
+lines(times35,data35, col="red", type='p')
+
+
+
+# Plot for Stn 30
+NH2CL30<- stations[,97:250,pp][2,]
+
+plot(tt230615_1,NH2CL30,type='l', ylim=c(0,1.7), main="NH2CL (mg/L) at Stn_30_P (Beach Rd) ", xlab="Time", ylab="NH2CL (mg/L)")
+legend("bottomright", pch=c(1,NA), lty=c(NA,1), col=c("red","black"), legend=c("Observed","Simulated"))
+lines(times30,data30, col="red", type='p')
+
+
+
+# Time 23 june Afternoon
+t1 <- chron("6/23/2015", "12:00:00")
+t2 <- chron("6/23/2015", "18:00:00")
+tt230615_2 <- seq(t1, t2, by = times("00:15:00"))
+#stnLoc<-c(35,30,19, 20, 14, 26, 33, 31, 43)
+
+
+# Plot for Stn 19
+NH2CL19<- stations[,145:250,pp][3,]
+
+plot(tt230615_2,NH2CL19,type='l', ylim=c(0,1.7), main="NH2CL (mg/L) at Stn_19_P (Victoria Rd) ", xlab="Time", ylab="NH2CL (mg/L)")
+legend("bottomright", pch=c(1,NA), lty=c(NA,1), col=c("red","black"), legend=c("Observed","Simulated"))
+lines(times19,data19, col="red", type='p')
+
+
+# Time 24 june Early Morning
+t1 <- chron("6/24/2015", "00:00:00")
+t2 <- chron("6/24/2015", "8:00:00")
+tt240615_1 <- seq(t1, t2, by = times("00:15:00"))
+#stnLoc<-c(35,30,19, 20, 14, 26, 33, 31, 43)
+
+
+# Plot for Stn 20
+NH2CL20<- stations[,193:250,pp][4,]
+
+plot(tt240615_1,NH2CL20,type='l', ylim=c(0,1.7), main="NH2CL (mg/L) at Stn_20_P (Handy Rd)", xlab="Time", ylab="NH2CL (mg/L)")
+legend("bottomright", pch=c(1,NA), lty=c(NA,1), col=c("red","black"), legend=c("Observed","Simulated"))
+lines(times20,data20, col="red", type='p')
+
+
+
+
+# Plot for Stn 14
+NH2CL20<- stations[,193:250,pp][5,]
+
+plot(tt240615_1,NH2CL20,type='l', ylim=c(0,1.7), main="NH2CL (mg/L) at Stn_14_P (Hill St) ", xlab="Time", ylab="NH2CL (mg/L)")
+legend("bottomright", pch=c(1,NA), lty=c(NA,1), col=c("red","black"), legend=c("Observed","Simulated"))
+lines(times14,data14, col="red", type='p')
+
+
+# Time 24 june  Morning & Afternoon
+t1 <- chron("6/24/2015", "08:00:00")
+t2 <- chron("6/24/2015", "18:00:00")
+tt240615_2 <- seq(t1, t2, by = times("00:15:00"))
+#stnLoc<-c(35,30,19, 20, 14, 26, 33, 31, 43)
+
+
+# Plot for Stn 26
+NH2CL26<- stations[,225:265,pp][6,]
+
+plot(tt240615_2,NH2CL20,type='l', ylim=c(0,1.7), main="NH2CL (mg/L) at Stn_26_P (Keppel Rd) ", xlab="Time", ylab="NH2CL (mg/L)")
+legend("bottomright", pch=c(1,NA), lty=c(NA,1), col=c("red","black"), legend=c("Observed","Simulated"))
+lines(times26,data26, col="red", type='p')
+
+
+
+
+# Time 25 june  Morning 
+t1 <- chron("6/25/2015", "00:00:00")
+t2 <- chron("6/25/2015", "14:00:00")
+tt250615_1 <- seq(t1, t2, by = times("00:15:00"))
+#stnLoc<-c(35,30,19, 20, 14, 26, 33, 31, 43)
+
+
+# Plot for Stn 33
+NH2CL33<- stations[,289:345,pp][7,]
+
+plot(tt250615_1,NH2CL33,type='l', ylim=c(0,1.7), main="NH2CL (mg/L) at Stn_33_P (Cove Dr) ", xlab="Time", ylab="NH2CL (mg/L)")
+legend("topright", pch=c(1,NA), lty=c(NA,1), col=c("red","black"), legend=c("Observed","Simulated"))
+lines(times33,data33, col="red", type='p')
+
+
+
+
+
+# Time 25 june  Afternoon 
+t1 <- chron("6/25/2015", "17:00:00")
+t2 <- chron("6/26/2015", "00:00:00")
+tt250615_2 <- seq(t1, t2, by = times("00:15:00"))
+#stnLoc<-c(35,30,19, 20, 14, 26, 33, 31, 43)
+
+
+# Plot for Stn 31
+NH2CL31<- stations[,257:385,pp][8,]
+
+plot(tt250615_2,NH2CL31,type='l', ylim=c(0,1.7), main="NH2CL (mg/L) at Stn_31_P (Santosa Gateway) ", xlab="Time", ylab="NH2CL (mg/L)")
+legend("bottomright", pch=c(1,NA), lty=c(NA,1), col=c("red","black"), legend=c("Observed","Simulated"))
+lines(times31,data31, col="red", type='p')
+
+
+# Time 26 june  Morning 
+t1 <- chron("6/26/2015", "06:00:00")
+t2 <- chron("6/26/2015", "14:00:00")
+tt260615_1 <- seq(t1, t2, by = times("00:15:00"))
+#stnLoc<-c(35,30,19, 20, 14, 26, 33, 31, 43)
+
+
+# Plot for Stn 43
+NH2CL43<- stations[,409:441,pp][9,]
+
+plot(tt260615_1,NH2CL43,type='l', ylim=c(0,1.7), main="NH2CL (mg/L) at Stn_43_P (Bayfront Ave)", xlab="Time", ylab="NH2CL (mg/L)")
+legend("bottomright", pch=c(1,NA), lty=c(NA,1), col=c("red","black"), legend=c("Observed","Simulated"))
+lines(times43,data43, col="red", type='p')
+
+
+
+```
+
+

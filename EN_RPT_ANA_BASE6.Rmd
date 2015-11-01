@@ -1,0 +1,365 @@
+---
+title: "EN_RPT_FILE_ANA_BAS"
+author: "M.Shafiqul Islam"
+date: "Friday, March 20, 2015"
+output: html_document
+---
+####Write a basic function to Read 
+```{r}
+epanetresults<-function(fileName, objSearch, SimDur, RepInterval){
+  # Step 1:
+  
+  # This function will give node/ link results taking from EPANET *.rpt file
+  #Function takes four arguments
+  
+  #fileName=epanet *.rpt file
+  # objSearch = Node or Link for which results will be extracte
+  # SimDur= Simulation duration in Hour
+  # RepInterval = Report time steps
+  
+  
+  
+  
+#fileName="10d10mg_res.rpt"
+NorepTime=SimDur/RepInterval
+conn=file(fileName,open="r")
+on.exit(close(conn))
+linn=readLines(conn)
+
+
+totNoLines=length(linn)
+for (i in 1:length(linn)){
+    
+  mm=grepl(objSearch, linn[i]) 
+
+  if (mm){
+      NodePosi=i
+      #print(NodePosi)
+      break
+      } 
+}
+
+#close(conn)
+
+
+hd <- read.table(fileName, header = TRUE, sep = "", skip=NodePosi+1, nrow=1, fill=TRUE)
+x <- read.table(fileName, header = TRUE, sep = "", skip=NodePosi+3, nrow=NorepTime+1, fill=TRUE)
+
+names(x)<-names(hd) # Assigns Column Names by taking table heading from table "hd"
+x$Time<-c(0,1:NorepTime) # To start time from zero
+return(x)
+}
+
+```
+### Calling the previous function for EPANET " *.RPT" file processing
+```{r}
+set
+#Step 2:
+#Before running this file, you must run epanetresults.R functions
+#This will give all stations results in 3d matrix
+#This section takes long time to load 
+#To plot results pls use epanet_sg_plpt script
+
+
+stnLoc<-c(35,33,27, 47, 31, 19, 12, 17, 29, 16, 49, 14, 24, 20, 44, 15, 22, 23, 48, 30, 28, 36, 26, 45, 43, 11, 25, 32, 13)
+
+SimDur=120
+RepInterval=0.25
+NorepTime=SimDur/RepInterval
+no_Stn=length(stnLoc)
+no_spece=11
+
+
+stations = array(0, dim=c(no_Stn,NorepTime+1,no_spece))
+
+
+for (ii in 1:length(stnLoc)){
+  staName=paste0("Stn_",stnLoc[ii],"_P")
+  
+  yy<-epanetresults("rptPHFCA74.rpt", staName, SimDur, RepInterval)
+  
+  #function(fileName, objSearch, SimDur, RepInterval)
+  
+  
+  KK<-as.matrix(yy)
+
+  stations[ii, , ] <-KK
+  
+}
+
+
+```
+
+
+
+### PLotting Age of Data
+```{r}
+
+Age<- stations[,25:241,2] # Innore firstdat results, 2 indicates column   corresponding age
+# Results are stored rowise, each row indicates results for each station 
+#meanAge<-(rowMeans(Age)) # Mean age of each station
+meanAge<-apply(Age,1, mean, na.rm = TRUE) # 1 indicates row, 1 indicates colum
+stdAge<-apply(Age,1, sd, na.rm = TRUE) # 1 indicates row, 1 indicates colum
+minAge<-apply(Age,1, min, na.rm = TRUE) # 1 indicates row, 1 indicates colum
+maxAge<-apply(Age,1, max, na.rm = TRUE) # 1 indicates row, 1 indicates colum
+#Plot Mean Age
+         
+names(meanAge)<-stnLoc
+par(mfrow=c(2,1))
+        
+# # g<-barplot(meanAge, col=rainbow(20), horiz = FALSE, xlab = "Station No.",ylab="Age,hr", main = "Mean Water Age (hr) at Different Stations")
+# # text(g, 3, labels=names(meanAge),cex = .75) #cex>> font size
+
+ names(meanAge)<-stnLoc
+# Sorted Plot
+g<-barplot(sort(meanAge,decreasing = TRUE), col=rainbow(20), ylim=c(0,max(meanAge)*1.2), horiz = FALSE, xlab = "Station No.",ylab="Age,hr", main = "Mean Water Age (hr) at Different Stations", names.arg="")
+text(g, 10, labels=names(sort(meanAge,decreasing = TRUE)),cex = .75) #cex>> font size
+
+
+# 
+# # names(stdAge)<-stnLoc
+# # g<-barplot(stdAge, col=rainbow(20), horiz = FALSE, xlab = "Station No.",ylab="Age,hr", main = "Standard Dev. Water Age (hr) at Different Stations")
+# # text(g, 3, labels=names(stdAge),cex = .75) #cex>> font size
+# 
+# 
+# names(stdAge)<-stnLoc
+# g<-barplot(sort(stdAge,decreasing = TRUE), col=rainbow(20), horiz = FALSE, ylim=c(0,max(stdAge)*1.2), xlab = "Station No.",ylab="Age,hr", main = "STD Water Age (hr) at Different Stations", names.arg="")
+# text(g, 10, labels=names(sort(stdAge,decreasing = TRUE)),cex = .75) #cex>> font size
+
+
+
+
+# 
+# #Plot Min Age
+# 
+# names(minAge)<-stnLoc
+# g<-barplot(sort(minAge,decreasing = TRUE), col=rainbow(20), horiz = FALSE, ylim=c(0,max(minAge)*1.2), xlab = "Station No.",ylab="Age,hr", main = "Min Water Age (hr) at Different Stations", names.arg="")
+# text(g, 3, labels=names(sort(minAge,decreasing = TRUE)),cex = .75) #cex>> font size
+# 
+# 
+# #Plot Max Age
+# 
+# names(maxAge)<-stnLoc
+# g<-barplot(sort(maxAge,decreasing = TRUE), col=rainbow(20), horiz = FALSE, ylim=c(0,max(maxAge)*1.2), xlab = "Station No.",ylab="Age,hr", main = "Max Water Age (hr) at Different Stations", names.arg="")
+# text(g, 20, labels=names(sort(maxAge,decreasing = TRUE)),cex = .75) #cex>> font size
+# 
+
+
+
+
+```
+### PLotting cNH2CL
+```{r}
+
+cNH2CL<- stations[,25:241,5] # Innore firstdat results, 2 indicates column corresponding cNH2CL
+
+meancNH2CL<-apply(cNH2CL,1, mean, na.rm = TRUE) # 1 indicates row, 1 indicates colum
+stdcNH2CL<-apply(cNH2CL,1, sd, na.rm = TRUE) # 1 indicates row, 1 indicates colum
+mincNH2CL<-apply(cNH2CL,1, min, na.rm = TRUE) # 1 indicates row, 1 indicates colum
+maxcNH2CL<-apply(cNH2CL,1, max, na.rm = TRUE) # 1 indicates row, 1 indicates colum
+
+# raw_cNH2CL process a bar diagram without any sorting
+# 
+# # Results are stored rowise, each row indicates results for each station 
+# cNH2CL<- stations[,25:241,6] # Innore first24 results, 2 indicates column corresponding cNH2CL
+# meancNH2CL<-(rowMeans(cNH2CL)) # Meawn cNH2CL of each station
+# names(meancNH2CL)<-stnLoc
+# g<-barplot(meancNH2CL, col=rainbow(20), horiz = FALSE, xlab = "Station No.",ylab="NH2CL,mg/L", main = "Mean NH2CL (mg/L) at Different Stations")
+# text(g, 3, labels=names(meancNH2CL),cex = .75) #cex>> font size
+# 
+
+
+
+#Plot Mean cNH2CL
+
+names(meancNH2CL)<-stnLoc
+g<-barplot(sort(meancNH2CL,decreasing = TRUE), col='brown', horiz = FALSE, ylim=c(0,max(meancNH2CL)*1.2), xlab = "Station No.",ylab="NH2CL,mg/L", main = "Mean NH2CL (mg/L) at Different Stations", names.arg="")
+text(g, .1, labels=names(sort(meancNH2CL,decreasing = TRUE)),cex = .75) #cex>> font size
+
+text(g, round(sort(meancNH2CL,decreasing = TRUE), 1)+.3, labels=round(sort(meancNH2CL,decreasing = TRUE), 1),cex = .75) #cex>> font size
+
+ 
+# #Plot Standard Dev cNH2CL
+# names(stdcNH2CL)<-stnLoc
+# g<-barplot(sort(stdcNH2CL,decreasing = TRUE), col=rainbow(20), horiz = FALSE, ylim=c(0,max(stdcNH2CL)*1.2), xlab = "Station No.",ylab="NH2CL,mg/L", main = "STD NH2CL (mg/L) at Different Stations", names.arg="")
+# 
+# text(g, 0.1, labels=names(sort(stdcNH2CL,decreasing = TRUE)),cex = .75) #cex>> font size
+# 
+
+
+
+# #Plot Min cNH2CL
+# names(mincNH2CL)<-stnLoc
+# g<-barplot(sort(mincNH2CL,decreasing = TRUE), col=rainbow(20), horiz = FALSE, ylim=c(0,max(mincNH2CL)*1.2), xlab = "Station No.",ylab="NH2CL,mg/L", main = "Min NH2CL (mg/L) at Different Stations", names.arg="")
+# text(g, 0.5, labels=names(sort(mincNH2CL,decreasing = TRUE)),cex = .75) #cex>> font size
+# 
+# # 
+# 
+# #Plot Max cNH2CL
+# 
+# names(maxcNH2CL)<-stnLoc
+# g<-barplot(sort(maxcNH2CL,decreasing = TRUE), col=rainbow(0), horiz = FALSE, ylim=c(0,max(maxcNH2CL)*1.1), xlab = "Station No.",ylab="NH2CL,mg/L", main = "Max NH2CL (mg/L) at Different Stations", names.arg="")
+# text(g, 0.5, labels=names(sort(maxcNH2CL,decreasing = TRUE)),cex = .75) #cex>> font size
+# 
+
+
+
+```
+
+## Effect of simulation duration on Age 
+```{r}
+par(mfrow=c(3,1))
+# 9th  day average
+Age1<- stations[,193:145,2] # Age
+meanAge1<-apply(Age1,1, mean, na.rm = TRUE) # 1 indicates row, 1 indicates colum
+
+#Plot Mean Age
+bval1=round(sort(meanAge1,decreasing = TRUE), 1)+20
+names(meanAge1)<-stnLoc
+g<-barplot(sort(meanAge1,decreasing = TRUE), col='green', horiz = FALSE, ylim=c(0,max(meanAge1)*1.2), xlab = "Station No.",ylab="Age,Hr", main = "Mean Age (Hr) at Different Stations, (9th day Average)", names.arg="")
+text(g, 8, labels=names(sort(meanAge1,decreasing = TRUE)),cex = .75) #cex>> font size
+text(g, bval1, labels=round(sort(meanAge1,decreasing = TRUE), 1),cex = .75) #cex>> font size
+
+
+
+
+# 10th  day average
+Age2<- stations[,217:241,2] # Age
+meanAge2<-apply(Age2,1, mean, na.rm = TRUE) # 1 indicates row, 1 indicates colum
+
+#Plot Mean Age
+bval1=round(sort(meanAge2,decreasing = TRUE), 1)+20
+names(meanAge2)<-stnLoc
+g<-barplot(sort(meanAge2,decreasing = TRUE), col='green', horiz = FALSE, ylim=c(0,max(meanAge2)*1.2), xlab = "Station No.",ylab="Age,Hr", main = "Mean Age (Hr) at Different Stations, (10th day Average)", names.arg="")
+text(g, 8, labels=names(sort(meanAge2,decreasing = TRUE)),cex = .75) #cex>> font size
+text(g, bval1, labels=round(sort(meanAge2,decreasing = TRUE), 1),cex = .75) #cex>> font size
+
+
+# 9 day average
+Age3<- stations[,25:241,2] # Age
+meanAge3<-apply(Age3,1, mean, na.rm = TRUE) # 1 indicates row, 1 indicates colum
+
+#Plot Mean Age
+bval1=round(sort(meanAge3,decreasing = TRUE), 1)+20
+names(meanAge3)<-stnLoc
+g<-barplot(sort(meanAge3,decreasing = TRUE), col='green', horiz = FALSE, ylim=c(0,max(meanAge3)*1.2), xlab = "Station No.",ylab="Age,Hr", main = "Mean Age (Hr) at Different Stations, (9 day Average)", names.arg="")
+text(g, 8, labels=names(sort(meanAge3,decreasing = TRUE)),cex = .75) #cex>> font size
+text(g, bval1, labels=round(sort(meanAge3,decreasing = TRUE), 1),cex = .75) #cex>> font size
+
+
+```
+
+
+
+## Effect of simulation duration on cNH2CL
+```{r}
+par(mfrow=c(3,1))
+
+#9th day average
+cNH2CL1<- stations[,193:145,5] # Age
+meancNH2CL1<-apply(cNH2CL1,1, mean, na.rm = TRUE) # 1 indicates row, 1 indicates colum
+
+#Plot Mean cNH2CL
+bval1=round(sort(meancNH2CL1,decreasing = TRUE), 1)+.20
+names(meancNH2CL1)<-stnLoc
+g<-barplot(sort(meancNH2CL1,decreasing = TRUE), col='green', horiz = FALSE, ylim=c(0,max(meancNH2CL1)*1.2), xlab = "Station No.",ylab="NH2CL,mg/L", main = "Mean NH2CL (mg/L) at Different Stations, 9th day Average ", names.arg="")
+text(g, .1, labels=names(sort(meancNH2CL1,decreasing = TRUE)),cex = .75) #cex>> font size
+text(g, bval1, labels=round(sort(meancNH2CL1,decreasing = TRUE), 2),cex = .75) #cex>> font size
+
+
+
+
+# 10th day average
+cNH2CL2<- stations[,217:241,5] # Age
+meancNH2CL2<-apply(cNH2CL2,1, mean, na.rm = TRUE) # 1 indicates row, 1 indicates colum
+
+#Plot Mean cNH2CL
+bval2=round(sort(meancNH2CL2,decreasing = TRUE), 1)+.20
+names(meancNH2CL2)<-stnLoc
+g<-barplot(sort(meancNH2CL2,decreasing = TRUE), col='green', horiz = FALSE, ylim=c(0,max(meancNH2CL2)*1.2), xlab = "Station No.",ylab="NH2CL,mg/L", main = "Mean NH2CL (mg/L) at Different Stations, 10th day Average", names.arg="")
+text(g, .1, labels=names(sort(meancNH2CL2,decreasing = TRUE)),cex = .75) #cex>> font size
+text(g, bval2, labels=round(sort(meancNH2CL2,decreasing = TRUE), 2),cex = .75) #cex>> font size
+
+
+# 9day(day 2-10) day average
+cNH2CL3<- stations[,25:241,5] # Age
+meancNH2CL3<-apply(cNH2CL3,1, mean, na.rm = TRUE) # 1 indicates row, 1 indicates colum
+
+#Plot Mean cNH2CL
+bval3=round(sort(meancNH2CL3,decreasing = TRUE), 1)+.20
+names(meancNH2CL3)<-stnLoc
+g<-barplot(sort(meancNH2CL3,decreasing = TRUE), col='green', horiz = FALSE, ylim=c(0,max(meancNH2CL3)*1.2), xlab = "Station No.",ylab="NH2CL,mg/L", main = "Mean NH2CL (mg/L) at Different Stations, 9 day average", names.arg="")
+text(g, .1, labels=names(sort(meancNH2CL3,decreasing = TRUE)),cex = .75) #cex>> font size
+text(g, bval3, labels=round(sort(meancNH2CL3,decreasing = TRUE), 2),cex = .75) #cex>> font size
+
+
+```
+
+
+
+## cNH2CL during first few days
+```{r}
+par(mfrow=c(3,1))
+cNH2CL1<- stations[,1:24,5] # Age
+meancNH2CL1<-apply(cNH2CL1,1, mean, na.rm = TRUE) # 1 indicates row, 1 indicates colum
+
+#Plot Mean cNH2CL
+bval1=round(sort(meancNH2CL1,decreasing = TRUE), 1)+.20
+names(meancNH2CL1)<-stnLoc
+g<-barplot(sort(meancNH2CL1,decreasing = TRUE), col='green', horiz = FALSE, ylim=c(0,max(meancNH2CL1)*1.2), xlab = "Station No.",ylab="NH2CL,mg/L", main = "Mean NH2CL (mg/L) at Different Stations, 1st day Average ", names.arg="")
+text(g, .1, labels=names(sort(meancNH2CL1,decreasing = TRUE)),cex = .75) #cex>> font size
+text(g, bval1, labels=round(sort(meancNH2CL1,decreasing = TRUE), 2),cex = .75) #cex>> font size
+
+
+
+
+# First day average
+cNH2CL2<- stations[,25:48,6] # Age
+meancNH2CL2<-apply(cNH2CL2,1, mean, na.rm = TRUE) # 1 indicates row, 1 indicates colum
+
+#Plot Mean cNH2CL
+bval2=round(sort(meancNH2CL2,decreasing = TRUE), 1)+.20
+names(meancNH2CL2)<-stnLoc
+g<-barplot(sort(meancNH2CL2,decreasing = TRUE), col='green', horiz = FALSE, ylim=c(0,max(meancNH2CL2)*1.2), xlab = "Station No.",ylab="NH2CL,mg/L", main = "Mean NH2CL (mg/L) at Different Stations, 2nd day Average", names.arg="")
+text(g, .1, labels=names(sort(meancNH2CL2,decreasing = TRUE)),cex = .75) #cex>> font size
+text(g, bval2, labels=round(sort(meancNH2CL2,decreasing = TRUE), 2),cex = .75) #cex>> font size
+
+
+# First day average
+cNH2CL3<- stations[,49:73,6] # Age
+meancNH2CL3<-apply(cNH2CL3,1, mean, na.rm = TRUE) # 1 indicates row, 1 indicates colum
+
+#Plot Mean cNH2CL
+bval3=round(sort(meancNH2CL3,decreasing = TRUE), 1)+.20
+names(meancNH2CL3)<-stnLoc
+g<-barplot(sort(meancNH2CL3,decreasing = TRUE), col='green', horiz = FALSE, ylim=c(0,max(meancNH2CL3)*1.2), xlab = "Station No.",ylab="NH2CL,mg/L", main = "Mean NH2CL (mg/L) at Different Stations, 3rd day average", names.arg="")
+text(g, .1, labels=names(sort(meancNH2CL3,decreasing = TRUE)),cex = .75) #cex>> font size
+text(g, bval3, labels=round(sort(meancNH2CL3,decreasing = TRUE), 2),cex = .75) #cex>> font size
+
+
+```
+
+
+
+## NH2CL Vs TOC
+```{r}
+library(ggplot2)
+library(dplyr)
+pf=read.csv("NH2CL VsTOC.csv", skip=1)
+pf$Station=as.factor(pf$Station)
+
+ggplot(pf, aes(x = TOC[1:4]),  fill="white") + 
+  geom_line(aes(y = NH2CL[1:4]), colour="blue", lwd=1.2) +geom_point(aes(y = NH2CL[1:4]))+
+  geom_line(aes(y = NH2CL[5:8]), colour = "grey", lwd=1.2) + geom_point(aes(y = NH2CL[5:8]))+
+  geom_line(aes(y = NH2CL[9:12]), colour = "green", lwd=1.2) + geom_point(aes(y = NH2CL[9:12]))+
+  ylab(label="NH2CL(mg/L)") + 
+  xlab("TOC(mg/L)")
+
+
+
+```
+
+
+
+
+

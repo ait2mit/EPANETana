@@ -1,0 +1,2258 @@
+---
+title: "Online Water Quality Data Analysis"
+author: "M.Shafiqul Islam"
+date: "Tuesday, June 10, 2015"
+output: pdf_document
+---
+About Data:
+-This file select the good quality data based on qualitivive ranking
+
+#### Important Notes:
+- remove "2" from "Marina Blvd.2  (Stn 27) (Conductivity:uS/cm)" column
+-This file has an extra station "station 44" which is not available in "Condunctivity file"
+
+```{r}
+library("ggplot2")
+library("prospectr")
+# Read CSV file
+  fileCON="Dec14-Jan15 - PHFC CTY (30mins)M.csv" # This file has been modified by adding two extra blank columns to match dimention of ORP and pH data
+  myDataCON<-read.table(fileCON, header= TRUE, sep=",") # Full data
+
+  fileORP="Dec14-Jan15 - PHFC ORP (30mins).csv"
+  myDataORP<-read.table(fileORP, header= TRUE, sep=",") # Full data
+
+
+  filePH="Dec14-Jan15 - PHFC PH (30mins).csv"
+  myDataPH<-read.table(filePH, header= TRUE, sep=",") # Full data
+
+  fileTUR="Oct 14 - PHFC TURBFNU (30mins).csv"
+  myDataTUR<-read.table(fileTUR, header= TRUE, sep=",") # Fudll data
+
+
+# Extract names of the variable other than Time
+  cnames<-names(myDataORP)
+# declaring variable
+  staLoc= rep(NA, 19) 
+  staNo= rep(NA, 19)
+  staNu= rep(NA, 19)
+
+# Renaming column Based on the station
+  for (i in 1:19){
+     staLoc[i]<-cnames[2*i]
+     cln<-unique(na.omit(as.numeric(unlist(strsplit(unlist(staLoc[i]), "[^0-9]+"))))) # Only extracting numbers
+     staNu[i]=cln # just Station No
+     staNo[i]=paste0("Stn_",cln,"_P")
+     cnames[2*i]<-staNo[i]
+  }
+ names(myDataCON)<-cnames 
+ names(myDataORP)<-cnames
+ names(myDataPH)<-cnames
+ names(myDataTUR)<-cnames 
+
+
+
+# Extracting station values considering time steps and time are same
+
+#Conductivity
+sCON35<-myDataCON$Stn_35_P
+sCON25<-myDataCON$Stn_25_P
+sCON30<-myDataCON$Stn_30_P
+sCON20<-myDataCON$Stn_20_P
+sCON19<-myDataCON$Stn_19_P
+sCON11<-myDataCON$Stn_11_P
+sCON22<-myDataCON$Stn_22_P
+sCON17<-myDataCON$Stn_17_P
+sCON29<-myDataCON$Stn_29_P
+sCON14<-myDataCON$Stn_14_P
+sCON36<-myDataCON$Stn_36_P
+sCON43<-myDataCON$Stn_43_P
+sCON12<-myDataCON$Stn_12_P
+sCON27<-myDataCON$Stn_27_P
+sCON44<-myDataCON$Stn_44_P # It is blanck as it has been added to match dim of other spreadsheet
+sCON26<-myDataCON$Stn_26_P
+sCON31<-myDataCON$Stn_31_P
+sCON33<-myDataCON$Stn_33_P
+sCON49<-myDataCON$Stn_49_P
+
+
+
+
+#ORP
+
+sORP35<-myDataORP$Stn_35_P
+sORP25<-myDataORP$Stn_25_P
+sORP30<-myDataORP$Stn_30_P
+sORP20<-myDataORP$Stn_20_P
+sORP19<-myDataORP$Stn_19_P
+sORP11<-myDataORP$Stn_11_P
+sORP22<-myDataORP$Stn_22_P
+sORP17<-myDataORP$Stn_17_P
+sORP29<-myDataORP$Stn_29_P
+sORP14<-myDataORP$Stn_14_P
+sORP36<-myDataORP$Stn_36_P
+sORP43<-myDataORP$Stn_43_P
+sORP12<-myDataORP$Stn_12_P
+sORP27<-myDataORP$Stn_27_P
+sORP44<-myDataORP$Stn_44_P
+sORP26<-myDataORP$Stn_26_P
+sORP31<-myDataORP$Stn_31_P
+sORP33<-myDataORP$Stn_33_P
+sORP49<-myDataORP$Stn_49_P
+
+
+#pH
+sPH35<-myDataPH$Stn_35_P
+sPH25<-myDataPH$Stn_25_P
+sPH30<-myDataPH$Stn_30_P
+sPH20<-myDataPH$Stn_20_P
+sPH19<-myDataPH$Stn_19_P
+sPH11<-myDataPH$Stn_11_P
+sPH22<-myDataPH$Stn_22_P
+sPH17<-myDataPH$Stn_17_P
+sPH29<-myDataPH$Stn_29_P
+sPH14<-myDataPH$Stn_14_P
+sPH36<-myDataPH$Stn_36_P
+sPH43<-myDataPH$Stn_43_P
+sPH12<-myDataPH$Stn_12_P
+sPH27<-myDataPH$Stn_27_P
+sPH44<-myDataPH$Stn_44_P
+sPH26<-myDataPH$Stn_26_P
+sPH31<-myDataPH$Stn_31_P
+sPH33<-myDataPH$Stn_33_P
+sPH49<-myDataPH$Stn_49_P
+
+
+
+#Turbidity
+sTUR35<-myDataTUR$Stn_35_P
+sTUR25<-myDataTUR$Stn_25_P
+sTUR30<-myDataTUR$Stn_30_P
+sTUR20<-myDataTUR$Stn_20_P
+sTUR19<-myDataTUR$Stn_19_P
+sTUR11<-myDataTUR$Stn_11_P
+sTUR22<-myDataTUR$Stn_22_P
+sTUR17<-myDataTUR$Stn_17_P
+sTUR29<-myDataTUR$Stn_29_P
+sTUR14<-myDataTUR$Stn_14_P
+sTUR36<-myDataTUR$Stn_36_P
+sTUR43<-myDataTUR$Stn_43_P
+sTUR12<-myDataTUR$Stn_12_P
+sTUR27<-myDataTUR$Stn_27_P
+sTUR44<-myDataTUR$Stn_44_P
+sTUR26<-myDataTUR$Stn_26_P
+sTUR31<-myDataTUR$Stn_31_P
+sTUR33<-myDataTUR$Stn_33_P
+sTUR49<-myDataTUR$Stn_49_P
+
+
+dTime2<-myDataORP$Date.Time
+dTime1<-as.character(dTime2)
+dTime<-as.POSIXlt(dTime1,format="%m/%d/%Y %H:%M")
+
+
+
+
+```
+## Plotting sample data
+
+```{r}
+par(mfrow=c(1,1))
+#plot(dTime, sORP35, type='n')
+
+ylm1=c(7,9.5)
+
+
+#pH
+plot(dTime[1:480], sPH35[1:480], col="red", type='l', yaxt='n',  ylim=ylm1, xlab = "", ylab = "")
+axis(2, ylim=ylm1, col="black",las=1)
+par(new=T)
+plot(dTime[1:480], sPH25[1:480], col="green", type='l',axes=FALSE, ylim=ylm1, xlab = "", ylab = "")
+axis(2, ylim=ylm1, col="black",las=1)
+par(new=T)
+plot(dTime[1:480], sPH30[1:480], col="blue", type='l', axes=FALSE, ylim=ylm1, xlab = "", ylab = "")
+axis(2, ylim=ylm1, col="black",las=1)
+par(new=T)
+plot(dTime[1:480], sPH17[1:480], col="brown", type='l', axes=FALSE, ylim=ylm1, xlab = "", ylab = "")
+axis(2, ylim=ylm1, col="black",las=1)
+par(new=T)
+plot(dTime[1:480], sPH14[1:480], col="purple", type='l', axes=FALSE, ylim=ylm1, xlab = "", ylab = "")
+axis(2, ylim=ylm1, col="black",las=1)
+
+legend("bottomright", lty=c(1,1), col=c("red", "green","blue","brown","purple"), legend=c("35", "25", "30", "17", "14"))
+title("PH with time in different stations")
+mtext("Time ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5)
+
+
+
+
+
+
+
+#ORP
+ylm1=c(350,500)
+plot(dTime[1:480], sORP35[1:480], col="red", type='l', yaxt='n',  ylim=ylm1, xlab = "", ylab = "")
+axis(2, ylim=ylm1, col="black",las=1)
+par(new=T)
+plot(dTime[1:480], sORP25[1:480], col="green", type='l',axes=FALSE, ylim=ylm1, xlab = "", ylab = "")
+axis(2, ylim=ylm1, col="black",las=1)
+par(new=T)
+plot(dTime[1:480], sORP30[1:480], col="blue", type='l', axes=FALSE, ylim=ylm1, xlab = "", ylab = "")
+axis(2, ylim=ylm1, col="black",las=1)
+par(new=T)
+plot(dTime[1:480], sORP17[1:480], col="brown", type='l', axes=FALSE, ylim=ylm1, xlab = "", ylab = "")
+axis(2, ylim=ylm1, col="black",las=1)
+par(new=T)
+plot(dTime[1:480], sORP14[1:480], col="purple", type='l', axes=FALSE, ylim=ylm1, xlab = "", ylab = "")
+axis(2, ylim=ylm1, col="black",las=1)
+
+legend("topright", lty=c(1,1), col=c("red", "green","blue","brown","purple"), legend=c("35", "25", "30", "17", "14"))
+title("ORP with time in different stations")
+mtext("Time ",side=1,col="black",line=2.5) 
+mtext("ORP ",side=2,col="black",line=2.5)
+
+
+
+```
+
+
+
+```{r}
+## Function for Hour wise Data Extraction
+
+#sData=sPH25
+HourWiseData<-function(sData){
+  
+    nData=length(sData)/48
+    HourMat=array(NA, c(nData, 48))
+    for (i in 1:nData){
+    
+      for (j in 1:48){
+        HourMat[i,j]=sData[48*(i-1)+j]
+      }
+      
+    }
+    return(HourMat)
+}
+
+## End of Function for Hourwise Data Extraction
+
+ # Hour Wise Data for PH
+sPH25HourW=HourWiseData(sPH25)
+sPH29HourW=HourWiseData(sPH29)
+sPH30HourW=HourWiseData(sPH30)
+sPH27HourW=HourWiseData(sPH27)
+sPH35HourW=HourWiseData(sPH35)
+sPH43HourW=HourWiseData(sPH43)
+sPH33HourW=HourWiseData(sPH33)
+sPH11HourW=HourWiseData(sPH11)
+sPH22HourW=HourWiseData(sPH22)
+sPH17HourW=HourWiseData(sPH17)
+sPH31HourW=HourWiseData(sPH31)
+sPH26HourW=HourWiseData(sPH26)
+sPH14HourW=HourWiseData(sPH14)
+sPH19HourW=HourWiseData(sPH19)
+sPH12HourW=HourWiseData(sPH12)
+sPH49HourW=HourWiseData(sPH49)
+sPH20HourW=HourWiseData(sPH20)
+sPH36HourW=HourWiseData(sPH36)
+
+
+
+ # Hour Wise Data for COnductivity
+sCON25HourW=HourWiseData(sCON25)
+sCON29HourW=HourWiseData(sCON29)
+sCON30HourW=HourWiseData(sCON30)
+sCON27HourW=HourWiseData(sCON27)
+sCON35HourW=HourWiseData(sCON35)
+sCON43HourW=HourWiseData(sCON43)
+sCON33HourW=HourWiseData(sCON33)
+sCON11HourW=HourWiseData(sCON11)
+sCON22HourW=HourWiseData(sCON22)
+sCON17HourW=HourWiseData(sCON17)
+sCON31HourW=HourWiseData(sCON31)
+sCON26HourW=HourWiseData(sCON26)
+sCON14HourW=HourWiseData(sCON14)
+sCON19HourW=HourWiseData(sCON19)
+sCON12HourW=HourWiseData(sCON12)
+sCON49HourW=HourWiseData(sCON49)
+sCON20HourW=HourWiseData(sCON20)
+sCON36HourW=HourWiseData(sCON36)
+
+
+
+ # Hour Wise Data for ORP
+sORP25HourW=HourWiseData(sORP25)
+sORP29HourW=HourWiseData(sORP29)
+sORP30HourW=HourWiseData(sORP30)
+sORP27HourW=HourWiseData(sORP27)
+sORP35HourW=HourWiseData(sORP35)
+sORP43HourW=HourWiseData(sORP43)
+sORP33HourW=HourWiseData(sORP33)
+sORP11HourW=HourWiseData(sORP11)
+sORP22HourW=HourWiseData(sORP22)
+sORP17HourW=HourWiseData(sORP17)
+sORP31HourW=HourWiseData(sORP31)
+sORP26HourW=HourWiseData(sORP26)
+sORP14HourW=HourWiseData(sORP14)
+sORP19HourW=HourWiseData(sORP19)
+sORP12HourW=HourWiseData(sORP12)
+sORP49HourW=HourWiseData(sORP49)
+sORP20HourW=HourWiseData(sORP20)
+sORP36HourW=HourWiseData(sORP36)
+
+
+```
+#### Box and Line plot
+```{r}
+set.seed(121)
+ylimPH=c(7.5,10.5)
+ylimCON=c(140, 280)
+ylimORP=c(300,480)
+
+par(mar=rep(2,4), mfrow=c(2,1))
+# sPH25, sPH29, sPH30, sPH27, sPH35, sPH43, sPH33, sPH11, sPH22, sPH17, sPH31, sPH26, sPH14, sPH19,  sPH12, sPH49, sPH20, sPH36
+
+
+
+
+# Box plot CON
+
+
+boxplot(sCON25HourW, ylim=ylimCON, xlab="Hours in a Day", main="CON at s25"); lines(1:48, apply(na.omit(sCON25HourW), 2, mean), type="l", col="red")
+boxplot(sCON29HourW, ylim=ylimCON, xlab="Hours in a Day", main="CON at s29"); lines(1:48, apply(na.omit(sCON29HourW), 2, mean), type="l", col="red")
+boxplot(sCON30HourW, ylim=ylimCON, xlab="Hours in a Day", main="CON at s30"); lines(1:48, apply(na.omit(sCON30HourW), 2, mean), type="l", col="red")
+
+boxplot(sCON27HourW, ylim=ylimCON, xlab="Hours in a Day", main="CON at s27"); lines(1:48, apply(na.omit(sCON27HourW), 2, mean), type="l", col="red")
+boxplot(sCON35HourW, ylim=ylimCON, xlab="Hours in a Day", main="CON at s35"); lines(1:48, apply(na.omit(sCON35HourW), 2, mean), type="l", col="red")
+boxplot(sCON43HourW, ylim=ylimCON, xlab="Hours in a Day", main="CON at s43"); lines(1:48, apply(na.omit(sCON43HourW), 2, mean), type="l", col="red")
+
+boxplot(sCON33HourW, ylim=ylimCON, xlab="Hours in a Day", main="CON at s33"); lines(1:48, apply(na.omit(sCON33HourW), 2, mean), type="l", col="red")
+boxplot(sCON11HourW, ylim=ylimCON, xlab="Hours in a Day", main="CON at s11"); lines(1:48, apply(na.omit(sCON11HourW), 2, mean), type="l", col="red")
+boxplot(sCON22HourW, ylim=ylimCON, xlab="Hours in a Day", main="CON at s22"); lines(1:48, apply(na.omit(sCON22HourW), 2, mean), type="l", col="red")
+
+boxplot(sCON17HourW, ylim=ylimCON, xlab="Hours in a Day", main="CON at s17"); lines(1:48, apply(na.omit(sCON17HourW), 2, mean), type="l", col="red")
+boxplot(sCON31HourW, ylim=ylimCON, xlab="Hours in a Day", main="CON at s31"); lines(1:48, apply(na.omit(sCON31HourW), 2, mean), type="l", col="red")
+boxplot(sCON26HourW, ylim=ylimCON, xlab="Hours in a Day", main="CON at s26"); lines(1:48, apply(na.omit(sCON26HourW), 2, mean), type="l", col="red")
+
+boxplot(sCON14HourW, ylim=ylimCON, xlab="Hours in a Day", main="CON at s14"); lines(1:48, apply(na.omit(sCON14HourW), 2, mean), type="l", col="red")
+boxplot(sCON19HourW, ylim=ylimCON, xlab="Hours in a Day", main="CON at s19"); lines(1:48, apply(na.omit(sCON19HourW), 2, mean), type="l", col="red")
+boxplot(sCON12HourW, ylim=ylimCON, xlab="Hours in a Day", main="CON at s12"); lines(1:48, apply(na.omit(sCON12HourW), 2, mean), type="l", col="red")
+
+boxplot(sCON49HourW, ylim=ylimCON, xlab="Hours in a Day", main="CON at s49"); lines(1:48, apply(na.omit(sCON49HourW), 2, mean), type="l", col="red")
+boxplot(sCON20HourW, ylim=ylimCON, xlab="Hours in a Day", main="CON at s20"); lines(1:48, apply(na.omit(sCON20HourW), 2, mean), type="l", col="red")
+boxplot(sCON36HourW, ylim=ylimCON, xlab="Hours in a Day", main="CON at s36"); lines(1:48, apply(na.omit(sCON36HourW), 2, mean), type="l", col="red")
+
+
+
+
+
+
+
+
+
+# Boxplot ORP
+boxplot(sORP25HourW, ylim=ylimORP, xlab="Hours in a Day", main="ORP at s25"); lines(1:48, apply(na.omit(sORP25HourW), 2, mean), type="l", col="red")
+boxplot(sORP29HourW, ylim=ylimORP, xlab="Hours in a Day", main="ORP at s29"); lines(1:48, apply(na.omit(sORP29HourW), 2, mean), type="l", col="red")
+boxplot(sORP30HourW, ylim=ylimORP, xlab="Hours in a Day", main="ORP at s30"); lines(1:48, apply(na.omit(sORP30HourW), 2, mean), type="l", col="red")
+
+boxplot(sORP27HourW, ylim=ylimORP, xlab="Hours in a Day", main="ORP at s27"); lines(1:48, apply(na.omit(sORP27HourW), 2, mean), type="l", col="red")
+boxplot(sORP35HourW, ylim=ylimORP, xlab="Hours in a Day", main="ORP at s35"); lines(1:48, apply(na.omit(sORP35HourW), 2, mean), type="l", col="red")
+boxplot(sORP43HourW, ylim=ylimORP, xlab="Hours in a Day", main="ORP at s43"); lines(1:48, apply(na.omit(sORP43HourW), 2, mean), type="l", col="red")
+
+boxplot(sORP33HourW, ylim=ylimORP, xlab="Hours in a Day", main="ORP at s33"); lines(1:48, apply(na.omit(sORP33HourW), 2, mean), type="l", col="red")
+boxplot(sORP11HourW, ylim=ylimORP, xlab="Hours in a Day", main="ORP at s11"); lines(1:48, apply(na.omit(sORP11HourW), 2, mean), type="l", col="red")
+boxplot(sORP22HourW, ylim=ylimORP, xlab="Hours in a Day", main="ORP at s22"); lines(1:48, apply(na.omit(sORP22HourW), 2, mean), type="l", col="red")
+
+boxplot(sORP17HourW, ylim=ylimORP, xlab="Hours in a Day", main="ORP at s17"); lines(1:48, apply(na.omit(sORP17HourW), 2, mean), type="l", col="red")
+boxplot(sORP31HourW, ylim=ylimORP, xlab="Hours in a Day", main="ORP at s31"); lines(1:48, apply(na.omit(sORP31HourW), 2, mean), type="l", col="red")
+boxplot(sORP26HourW, ylim=ylimORP, xlab="Hours in a Day", main="ORP at s26"); lines(1:48, apply(na.omit(sORP26HourW), 2, mean), type="l", col="red")
+
+boxplot(sORP14HourW, ylim=ylimORP, xlab="Hours in a Day", main="ORP at s14"); lines(1:48, apply(na.omit(sORP14HourW), 2, mean), type="l", col="red")
+boxplot(sORP19HourW, ylim=ylimORP, xlab="Hours in a Day", main="ORP at s19"); lines(1:48, apply(na.omit(sORP19HourW), 2, mean), type="l", col="red")
+boxplot(sORP12HourW, ylim=ylimORP, xlab="Hours in a Day", main="ORP at s12"); lines(1:48, apply(na.omit(sORP12HourW), 2, mean), type="l", col="red")
+
+boxplot(sORP49HourW, ylim=ylimORP, xlab="Hours in a Day", main="ORP at s49"); lines(1:48, apply(na.omit(sORP49HourW), 2, mean), type="l", col="red")
+boxplot(sORP20HourW, ylim=ylimORP, xlab="Hours in a Day", main="ORP at s20"); lines(1:48, apply(na.omit(sORP20HourW), 2, mean), type="l", col="red")
+boxplot(sORP36HourW, ylim=ylimORP, xlab="Hours in a Day", main="ORP at s36"); lines(1:48, apply(na.omit(sORP36HourW), 2, mean), type="l", col="red")
+
+
+
+
+
+# Box Plot PH
+
+boxplot(sPH25HourW, ylim=ylimPH, xlab="Hours in a Day", main="PH at s25"); lines(1:48, apply(sPH25HourW, ylim=ylimPH, 2, mean), type="l", col="red")
+boxplot(sPH29HourW, ylim=ylimPH, xlab="Hours in a Day", main="PH at s29"); lines(1:48, apply(na.omit(sPH29HourW), 2, mean), type="l", col="red")
+boxplot(sPH30HourW, ylim=ylimPH, xlab="Hours in a Day", main="PH at s30"); lines(1:48, apply(na.omit(sPH30HourW), 2, mean), type="l", col="red")
+
+boxplot(sPH27HourW, ylim=ylimPH, xlab="Hours in a Day", main="PH at s27"); lines(1:48, apply(na.omit(sPH27HourW), 2, mean), type="l", col="red")
+boxplot(sPH35HourW, ylim=ylimPH, xlab="Hours in a Day", main="PH at s35"); lines(1:48, apply(na.omit(sPH35HourW), 2, mean), type="l", col="red")
+boxplot(sPH43HourW, ylim=ylimPH, xlab="Hours in a Day", main="PH at s43"); lines(1:48, apply(na.omit(sPH43HourW), 2, mean), type="l", col="red")
+
+boxplot(sPH33HourW, ylim=ylimPH, xlab="Hours in a Day", main="PH at s33"); lines(1:48, apply(na.omit(sPH33HourW), 2, mean), type="l", col="red")
+boxplot(sPH11HourW, ylim=ylimPH, xlab="Hours in a Day", main="PH at s11"); lines(1:48, apply(na.omit(sPH11HourW), 2, mean), type="l", col="red")
+boxplot(sPH22HourW, ylim=ylimPH, xlab="Hours in a Day", main="PH at s22"); lines(1:48, apply(na.omit(sPH22HourW), 2, mean), type="l", col="red")
+
+boxplot(sPH17HourW, ylim=ylimPH, xlab="Hours in a Day", main="PH at s17"); lines(1:48, apply(na.omit(sPH17HourW), 2, mean), type="l", col="red")
+boxplot(sPH31HourW, ylim=ylimPH, xlab="Hours in a Day", main="PH at s31"); lines(1:48, apply(na.omit(sPH31HourW), 2, mean), type="l", col="red")
+boxplot(sPH26HourW, ylim=ylimPH, xlab="Hours in a Day", main="PH at s26"); lines(1:48, apply(na.omit(sPH26HourW), 2, mean), type="l", col="red")
+
+boxplot(sPH14HourW, ylim=ylimPH, xlab="Hours in a Day", main="PH at s14"); lines(1:48, apply(na.omit(sPH14HourW), 2, mean), type="l", col="red")
+boxplot(sPH19HourW, ylim=ylimPH, xlab="Hours in a Day", main="PH at s19"); lines(1:48, apply(na.omit(sPH19HourW), 2, mean), type="l", col="red")
+boxplot(sPH12HourW, ylim=ylimPH, xlab="Hours in a Day", main="PH at s12"); lines(1:48, apply(na.omit(sPH12HourW), 2, mean), type="l", col="red")
+
+boxplot(sPH49HourW, ylim=ylimPH, xlab="Hours in a Day", main="PH at s49"); lines(1:48, apply(na.omit(sPH49HourW), 2, mean), type="l", col="red")
+boxplot(sPH20HourW, ylim=ylimPH, xlab="Hours in a Day", main="PH at s20"); lines(1:48, apply(na.omit(sPH20HourW), 2, mean), type="l", col="red")
+boxplot(sPH36HourW, ylim=ylimPH, xlab="Hours in a Day", main="PH at s36"); lines(1:48, apply(na.omit(sPH36HourW), 2, mean), type="l", col="red")
+
+```
+
+# Make Observed data as 24 hour data
+```{r}
+# making average over 30 min
+#ORP
+sORP25HourW48=apply(na.omit(sORP25HourW), 2, mean)
+sORP29HourW48=apply(na.omit(sORP29HourW), 2, mean)
+sORP30HourW48=apply(na.omit(sORP30HourW), 2, mean)
+sORP27HourW48=apply(na.omit(sORP27HourW), 2, mean)
+sORP35HourW48=apply(na.omit(sORP35HourW), 2, mean)
+sORP43HourW48=apply(na.omit(sORP43HourW), 2, mean)
+sORP33HourW48=apply(na.omit(sORP33HourW), 2, mean)
+sORP11HourW48=apply(na.omit(sORP11HourW), 2, mean)
+sORP22HourW48=apply(na.omit(sORP22HourW), 2, mean)
+sORP17HourW48=apply(na.omit(sORP17HourW), 2, mean)
+sORP31HourW48=apply(na.omit(sORP31HourW), 2, mean)
+sORP26HourW48=apply(na.omit(sORP25HourW), 2, mean)
+sORP14HourW48=apply(na.omit(sORP14HourW), 2, mean)
+sORP19HourW48=apply(na.omit(sORP19HourW), 2, mean)
+sORP12HourW48=apply(na.omit(sORP12HourW), 2, mean)
+sORP49HourW48=apply(na.omit(sORP49HourW), 2, mean)
+sORP20HourW48=apply(na.omit(sORP20HourW), 2, mean)
+sORP36HourW48=apply(na.omit(sORP36HourW), 2, mean)
+
+#Making 1 hour average 
+# DEclaring varibales
+sORP25HourW24x=rep(NA, 24)
+sORP29HourW24x=rep(NA, 24)
+sORP30HourW24x=rep(NA, 24)
+sORP27HourW24x=rep(NA, 24)
+sORP35HourW24x=rep(NA, 24)
+sORP43HourW24x=rep(NA, 24)
+sORP33HourW24x=rep(NA, 24)
+sORP11HourW24x=rep(NA, 24)
+sORP22HourW24x=rep(NA, 24)
+sORP17HourW24x=rep(NA, 24)
+sORP31HourW24x=rep(NA, 24)
+sORP26HourW24x=rep(NA, 24)
+sORP14HourW24x=rep(NA, 24)
+sORP19HourW24x=rep(NA, 24)
+sORP12HourW24x=rep(NA, 24)
+sORP49HourW24x=rep(NA, 24)
+sORP20HourW24x=rep(NA, 24)
+sORP36HourW24x=rep(NA, 24)
+
+  for (i in 1:24){
+    sORP25HourW24x[i]=(sORP25HourW48[2*i-1]+sORP25HourW48[2*i])*0.5
+    sORP29HourW24x[i]=(sORP29HourW48[2*i-1]+sORP29HourW48[2*i])*0.5
+    sORP30HourW24x[i]=(sORP30HourW48[2*i-1]+sORP30HourW48[2*i])*0.5
+    sORP27HourW24x[i]=(sORP27HourW48[2*i-1]+sORP27HourW48[2*i])*0.5
+    sORP35HourW24x[i]=(sORP35HourW48[2*i-1]+sORP35HourW48[2*i])*0.5
+    sORP43HourW24x[i]=(sORP43HourW48[2*i-1]+sORP43HourW48[2*i])*0.5
+    sORP33HourW24x[i]=(sORP33HourW48[2*i-1]+sORP33HourW48[2*i])*0.5
+    sORP11HourW24x[i]=(sORP11HourW48[2*i-1]+sORP11HourW48[2*i])*0.5
+    sORP22HourW24x[i]=(sORP22HourW48[2*i-1]+sORP22HourW48[2*i])*0.5
+    sORP17HourW24x[i]=(sORP17HourW48[2*i-1]+sORP17HourW48[2*i])*0.5
+    sORP31HourW24x[i]=(sORP31HourW48[2*i-1]+sORP31HourW48[2*i])*0.5
+    sORP26HourW24x[i]=(sORP26HourW48[2*i-1]+sORP26HourW48[2*i])*0.5
+    sORP14HourW24x[i]=(sORP14HourW48[2*i-1]+sORP14HourW48[2*i])*0.5
+    sORP19HourW24x[i]=(sORP19HourW48[2*i-1]+sORP19HourW48[2*i])*0.5
+    sORP12HourW24x[i]=(sORP12HourW48[2*i-1]+sORP12HourW48[2*i])*0.5
+    sORP49HourW24x[i]=(sORP49HourW48[2*i-1]+sORP49HourW48[2*i])*0.5
+    sORP20HourW24x[i]=(sORP20HourW48[2*i-1]+sORP20HourW48[2*i])*0.5
+    sORP36HourW24x[i]=(sORP36HourW48[2*i-1]+sORP36HourW48[2*i])*0.5
+
+  }
+ 
+
+#PH
+
+sPH25HourW48=apply(na.omit(sPH25HourW), 2, mean)
+sPH29HourW48=apply(na.omit(sPH29HourW), 2, mean)
+sPH30HourW48=apply(na.omit(sPH30HourW), 2, mean)
+sPH27HourW48=apply(na.omit(sPH27HourW), 2, mean)
+sPH35HourW48=apply(na.omit(sPH35HourW), 2, mean)
+sPH43HourW48=apply(na.omit(sPH43HourW), 2, mean)
+sPH33HourW48=apply(na.omit(sPH33HourW), 2, mean)
+sPH11HourW48=apply(na.omit(sPH11HourW), 2, mean)
+sPH22HourW48=apply(na.omit(sPH22HourW), 2, mean)
+sPH17HourW48=apply(na.omit(sPH17HourW), 2, mean)
+sPH31HourW48=apply(na.omit(sPH31HourW), 2, mean)
+sPH26HourW48=apply(na.omit(sPH25HourW), 2, mean)
+sPH14HourW48=apply(na.omit(sPH14HourW), 2, mean)
+sPH19HourW48=apply(na.omit(sPH19HourW), 2, mean)
+sPH12HourW48=apply(na.omit(sPH12HourW), 2, mean)
+sPH49HourW48=apply(na.omit(sPH49HourW), 2, mean)
+sPH20HourW48=apply(na.omit(sPH20HourW), 2, mean)
+sPH36HourW48=apply(na.omit(sPH36HourW), 2, mean)
+
+#Making 1 hour average 
+# DEclaring varibales
+sPH25HourW24x=rep(NA, 24)
+sPH29HourW24x=rep(NA, 24)
+sPH30HourW24x=rep(NA, 24)
+sPH27HourW24x=rep(NA, 24)
+sPH35HourW24x=rep(NA, 24)
+sPH43HourW24x=rep(NA, 24)
+sPH33HourW24x=rep(NA, 24)
+sPH11HourW24x=rep(NA, 24)
+sPH22HourW24x=rep(NA, 24)
+sPH17HourW24x=rep(NA, 24)
+sPH31HourW24x=rep(NA, 24)
+sPH26HourW24x=rep(NA, 24)
+sPH14HourW24x=rep(NA, 24)
+sPH19HourW24x=rep(NA, 24)
+sPH12HourW24x=rep(NA, 24)
+sPH49HourW24x=rep(NA, 24)
+sPH20HourW24x=rep(NA, 24)
+sPH36HourW24x=rep(NA, 24)
+
+  for (i in 1:24){
+    sPH25HourW24x[i]=(sPH25HourW48[2*i-1]+sPH25HourW48[2*i])*0.5
+    sPH29HourW24x[i]=(sPH29HourW48[2*i-1]+sPH29HourW48[2*i])*0.5
+    sPH30HourW24x[i]=(sPH30HourW48[2*i-1]+sPH30HourW48[2*i])*0.5
+    sPH27HourW24x[i]=(sPH27HourW48[2*i-1]+sPH27HourW48[2*i])*0.5
+    sPH35HourW24x[i]=(sPH35HourW48[2*i-1]+sPH35HourW48[2*i])*0.5
+    sPH43HourW24x[i]=(sPH43HourW48[2*i-1]+sPH43HourW48[2*i])*0.5
+    sPH33HourW24x[i]=(sPH33HourW48[2*i-1]+sPH33HourW48[2*i])*0.5
+    sPH11HourW24x[i]=(sPH11HourW48[2*i-1]+sPH11HourW48[2*i])*0.5
+    sPH22HourW24x[i]=(sPH22HourW48[2*i-1]+sPH22HourW48[2*i])*0.5
+    sPH17HourW24x[i]=(sPH17HourW48[2*i-1]+sPH17HourW48[2*i])*0.5
+    sPH31HourW24x[i]=(sPH31HourW48[2*i-1]+sPH31HourW48[2*i])*0.5
+    sPH26HourW24x[i]=(sPH26HourW48[2*i-1]+sPH26HourW48[2*i])*0.5
+    sPH14HourW24x[i]=(sPH14HourW48[2*i-1]+sPH14HourW48[2*i])*0.5
+    sPH19HourW24x[i]=(sPH19HourW48[2*i-1]+sPH19HourW48[2*i])*0.5
+    sPH12HourW24x[i]=(sPH12HourW48[2*i-1]+sPH12HourW48[2*i])*0.5
+    sPH49HourW24x[i]=(sPH49HourW48[2*i-1]+sPH49HourW48[2*i])*0.5
+    sPH20HourW24x[i]=(sPH20HourW48[2*i-1]+sPH20HourW48[2*i])*0.5
+    sPH36HourW24x[i]=(sPH36HourW48[2*i-1]+sPH36HourW48[2*i])*0.5
+
+  }
+ 
+
+
+# Conductivity
+
+
+
+sCON25HourW48=apply(na.omit(sCON25HourW), 2, mean)
+sCON29HourW48=apply(na.omit(sCON29HourW), 2, mean)
+sCON30HourW48=apply(na.omit(sCON30HourW), 2, mean)
+sCON27HourW48=apply(na.omit(sCON27HourW), 2, mean)
+sCON35HourW48=apply(na.omit(sCON35HourW), 2, mean)
+sCON43HourW48=apply(na.omit(sCON43HourW), 2, mean)
+sCON33HourW48=apply(na.omit(sCON33HourW), 2, mean)
+sCON11HourW48=apply(na.omit(sCON11HourW), 2, mean)
+sCON22HourW48=apply(na.omit(sCON22HourW), 2, mean)
+sCON17HourW48=apply(na.omit(sCON17HourW), 2, mean)
+sCON31HourW48=apply(na.omit(sCON31HourW), 2, mean)
+sCON26HourW48=apply(na.omit(sCON25HourW), 2, mean)
+sCON14HourW48=apply(na.omit(sCON14HourW), 2, mean)
+sCON19HourW48=apply(na.omit(sCON19HourW), 2, mean)
+sCON12HourW48=apply(na.omit(sCON12HourW), 2, mean)
+sCON49HourW48=apply(na.omit(sCON49HourW), 2, mean)
+sCON20HourW48=apply(na.omit(sCON20HourW), 2, mean)
+sCON36HourW48=apply(na.omit(sCON36HourW), 2, mean)
+
+#Making 1 hour average 
+# DEclaring varibales
+sCON25HourW24x=rep(NA, 24)
+sCON29HourW24x=rep(NA, 24)
+sCON30HourW24x=rep(NA, 24)
+sCON27HourW24x=rep(NA, 24)
+sCON35HourW24x=rep(NA, 24)
+sCON43HourW24x=rep(NA, 24)
+sCON33HourW24x=rep(NA, 24)
+sCON11HourW24x=rep(NA, 24)
+sCON22HourW24x=rep(NA, 24)
+sCON17HourW24x=rep(NA, 24)
+sCON31HourW24x=rep(NA, 24)
+sCON26HourW24x=rep(NA, 24)
+sCON14HourW24x=rep(NA, 24)
+sCON19HourW24x=rep(NA, 24)
+sCON12HourW24x=rep(NA, 24)
+sCON49HourW24x=rep(NA, 24)
+sCON20HourW24x=rep(NA, 24)
+sCON36HourW24x=rep(NA, 24)
+
+  for (i in 1:24){
+    sCON25HourW24x[i]=(sCON25HourW48[2*i-1]+sCON25HourW48[2*i])*0.5
+    sCON29HourW24x[i]=(sCON29HourW48[2*i-1]+sCON29HourW48[2*i])*0.5
+    sCON30HourW24x[i]=(sCON30HourW48[2*i-1]+sCON30HourW48[2*i])*0.5
+    sCON27HourW24x[i]=(sCON27HourW48[2*i-1]+sCON27HourW48[2*i])*0.5
+    sCON35HourW24x[i]=(sCON35HourW48[2*i-1]+sCON35HourW48[2*i])*0.5
+    sCON43HourW24x[i]=(sCON43HourW48[2*i-1]+sCON43HourW48[2*i])*0.5
+    sCON33HourW24x[i]=(sCON33HourW48[2*i-1]+sCON33HourW48[2*i])*0.5
+    sCON11HourW24x[i]=(sCON11HourW48[2*i-1]+sCON11HourW48[2*i])*0.5
+    sCON22HourW24x[i]=(sCON22HourW48[2*i-1]+sCON22HourW48[2*i])*0.5
+    sCON17HourW24x[i]=(sCON17HourW48[2*i-1]+sCON17HourW48[2*i])*0.5
+    sCON31HourW24x[i]=(sCON31HourW48[2*i-1]+sCON31HourW48[2*i])*0.5
+    sCON26HourW24x[i]=(sCON26HourW48[2*i-1]+sCON26HourW48[2*i])*0.5
+    sCON14HourW24x[i]=(sCON14HourW48[2*i-1]+sCON14HourW48[2*i])*0.5
+    sCON19HourW24x[i]=(sCON19HourW48[2*i-1]+sCON19HourW48[2*i])*0.5
+    sCON12HourW24x[i]=(sCON12HourW48[2*i-1]+sCON12HourW48[2*i])*0.5
+    sCON49HourW24x[i]=(sCON49HourW48[2*i-1]+sCON49HourW48[2*i])*0.5
+    sCON20HourW24x[i]=(sCON20HourW48[2*i-1]+sCON20HourW48[2*i])*0.5
+    sCON36HourW24x[i]=(sCON36HourW48[2*i-1]+sCON36HourW48[2*i])*0.5
+
+  }
+ 
+
+
+
+
+```
+
+## Make Simulation data as 24 hour average data
+
+
+```{r}
+
+#Notes: CSV files has been proceed on R on Plot_compare.rmd on VM
+par(mfrow=c(1,1))
+stnLoc<-c(25, 29, 30, 27, 35, 43, 33,11,22,17,31,26,14,19,12,49,20,36)
+fn="cNH2CL_TOC1_AllNodes.csv"
+# fn1="cNH2CL_Auto.csv"
+# fn2="cNH2CL_NO2_NO3.csv"
+# fn3="cNH2CL_NO2_NO3_w.csv"
+# fn4="cNH2CL_NO2_NO3_w_TOC02.csv" # 0.2 mg/L TOC
+# fn5="cNH2CL_NO2_NO3_w_TOC05.csv"
+# fn6="cNH2CL_NO2_NO3_w_TOC1.csv"
+# fn7="cNH2CL_NO2_NO3_w_TOC2.csv"
+# fn8="cNH2CL_NO2_NO3_w_TOC3.csv"
+
+
+fn<- read.table(fn, header = FALSE, sep = ",", nrow=length(stnLoc), fill=TRUE)
+
+# 24 hr was avoided while maing csv file (see VM) agnain another 2 days avod
+
+#stnLoc<-c(25, 29, 30, 27, 35, 43, 33,11,22,17,31,26,14,19,12,49,20,36)
+
+fn_25<-as.numeric(fn[1,194:217])
+fn_29<-as.numeric(fn[2,194:217])
+fn_30<-as.numeric(fn[3,194:217])
+fn_27<-as.numeric(fn[4,194:217])
+fn_35<-as.numeric(fn[5,194:217])
+fn_43<-as.numeric(fn[6,194:217])
+fn_33<-as.numeric(fn[7,194:217])
+fn_11<-as.numeric(fn[8,194:217])
+
+fn_22<-as.numeric(fn[9,194:217])
+fn_17<-as.numeric(fn[10,194:217])
+fn_31<-as.numeric(fn[11,194:217])
+fn_26<-as.numeric(fn[12,194:217])
+fn_14<-as.numeric(fn[13,194:217])
+fn_19<-as.numeric(fn[14,194:217])
+fn_12<-as.numeric(fn[15,194:217])
+fn_49<-as.numeric(fn[16,194:217])
+
+fn_20<-as.numeric(fn[17,194:217])
+fn_36<-as.numeric(fn[18,194:217])
+
+
+
+
+
+par(mfrow=c(1,1))
+#plot(dTime, sORP35, type='n')
+
+ylm1=c(0,3)
+
+
+#NH2CL
+plot(1:24, fn_35, col="red", type='l', yaxt='n',  ylim=ylm1, xlab = "", ylab = "")
+axis(2, ylim=ylm1, col="black",las=1)
+par(new=T)
+plot(1:24, fn_25, col="green", type='l',axes=FALSE, ylim=ylm1, xlab = "", ylab = "")
+axis(2, ylim=ylm1, col="black",las=1)
+par(new=T)
+plot(1:24, fn_30, col="blue", type='l', axes=FALSE, ylim=ylm1, xlab = "", ylab = "")
+axis(2, ylim=ylm1, col="black",las=1)
+par(new=T)
+plot(1:24, fn_17, col="brown", type='l', axes=FALSE, ylim=ylm1, xlab = "", ylab = "")
+axis(2, ylim=ylm1, col="black",las=1)
+par(new=T)
+plot(1:24, fn_14, col="purple", type='l', axes=FALSE, ylim=ylm1, xlab = "", ylab = "")
+axis(2, ylim=ylm1, col="black",las=1)
+
+legend("bottomright", lty=c(1,1), col=c("red", "green","blue","brown","purple"), legend=c("35", "25", "30", "17", "14"))
+title("Daily NH2CL with time in different stations")
+mtext("Time ",side=1,col="black",line=2.5) 
+mtext("NH2CL ",side=2,col="black",line=2.5)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#stnLoc<-c(25, 29, 30, 27, 35, 43, 33,11,22,17,31,26,14,19,12,49,20,36)
+#NH2CL vs PH
+par(mfrow=c(1,1))
+
+reg25PH<-lm(sPH25HourW24x~fn_25)
+plot(fn_25,sPH25HourW24x,  xlab = "", ylab = "")
+abline(reg25PH)
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5)
+
+reg29PH<-lm(sPH29HourW24x~fn_29)
+plot(fn_29,sPH29HourW24x,  xlab = "", ylab = "")
+abline(reg29PH) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("pH ",side=2,col="black",line=2.5)
+
+reg30PH<-lm(sPH30HourW24x~fn_30)
+plot(fn_30,sPH30HourW24x,  xlab = "", ylab = "")
+abline(reg30PH) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("pH ",side=2,col="black",line=2.5)
+
+reg27PH<-lm(sPH27HourW24x~fn_27)
+plot(fn_27,sPH27HourW24x,  xlab = "", ylab = "")
+abline(reg27PH) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("pH ",side=2,col="black",line=2.5)
+
+reg35PH<-lm(sPH35HourW24x~fn_35)
+plot(fn_35,sPH35HourW24x,  xlab = "", ylab = "")
+abline(reg35PH) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("pH ",side=2,col="black",line=2.5)
+
+reg43PH<-lm(sPH43HourW24x~fn_43)
+plot(fn_43,sPH43HourW24x,  xlab = "", ylab = "")
+abline(reg43PH) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("pH ",side=2,col="black",line=2.5)
+#stnLoc<-c(25, 29, 30, 27, 35, 43, 33,11,22,17,31,26,14,19,12,49,20,36)
+reg33PH<-lm(sPH33HourW24x~fn_33)
+plot(fn_33,sPH33HourW24x,  xlab = "", ylab = "")
+abline(reg33PH) 
+mtext("NH2Cl(mg/L) ",side=1,col="black",line=2.5)  
+mtext("pH ",side=2,col="black",line=2.5)
+
+reg11PH<-lm(sPH11HourW24x~fn_11)
+plot(fn_11,sPH11HourW24x,  xlab = "", ylab = "")
+abline(reg11PH) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("pH ",side=2,col="black",line=2.5)
+
+reg22PH<-lm(sPH22HourW24x~fn_22)
+plot(fn_22,sPH22HourW24x,  xlab = "", ylab = "")
+abline(reg22PH) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("pH ",side=2,col="black",line=2.5)
+
+
+reg17PH<-lm(sPH17HourW24x~fn_17)
+plot(fn_17,sPH17HourW24x,  xlab = "", ylab = "")
+abline(reg17PH) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("pH ",side=2,col="black",line=2.5)
+
+
+reg31PH<-lm(sPH31HourW24x~fn_31)
+plot(fn_31,sPH31HourW24x,  xlab = "", ylab = "")
+abline(reg31PH) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("pH ",side=2,col="black",line=2.5)
+
+reg26PH<-lm(sPH26HourW24x~fn_26)
+plot(fn_26,sPH26HourW24x,  xlab = "", ylab = "")
+abline(reg26PH) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("pH ",side=2,col="black",line=2.5)
+
+reg14PH<-lm(sPH14HourW24x~fn_14)
+plot(fn_14,sPH14HourW24x,  xlab = "", ylab = "")
+abline(reg14PH) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("pH ",side=2,col="black",line=2.5)
+
+reg19PH<-lm(sPH19HourW24x~fn_19)
+plot(fn_19,sPH19HourW24x,  xlab = "", ylab = "")
+abline(reg19PH) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("pH ",side=2,col="black",line=2.5)
+
+reg12PH<-lm(sPH12HourW24x~fn_12)
+plot(fn_12,sPH12HourW24x,  xlab = "", ylab = "")
+abline(reg12PH) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("pH ",side=2,col="black",line=2.5)
+
+reg49PH<-lm(sPH49HourW24x~fn_49)
+plot(fn_49,sPH49HourW24x,  xlab = "", ylab = "")
+abline(reg49PH) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("pH ",side=2,col="black",line=2.5)
+
+reg20PH<-lm(sPH20HourW24x~fn_20)
+plot(fn_20,sPH20HourW24x,  xlab = "", ylab = "")
+abline(reg20PH) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("pH ",side=2,col="black",line=2.5)
+
+reg36PH<-lm(sPH36HourW24x~fn_36)
+plot(fn_36,sPH36HourW24x,  xlab = "", ylab = "")
+abline(reg36PH) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("pH ",side=2,col="black",line=2.5)
+
+
+
+
+#NH2CL vs ORP
+reg25ORP<-lm(sORP25HourW24x~fn_25)
+plot(fn_25,sORP25HourW24x,  xlab = "", ylab = "")
+abline(reg25ORP) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("ORP",side=2,col="black",line=2.5)
+
+
+
+reg29ORP<-lm(sORP29HourW24x~fn_29)
+plot(fn_29,sORP29HourW24x,  xlab = "", ylab = "")
+abline(reg29ORP) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("ORP",side=2,col="black",line=2.5)
+
+reg30ORP<-lm(sORP30HourW24x~fn_30)
+plot(fn_30,sORP30HourW24x,  xlab = "", ylab = "")
+abline(reg30ORP) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("ORP",side=2,col="black",line=2.5)
+
+reg27ORP<-lm(sORP27HourW24x~fn_27)
+plot(fn_27,sORP27HourW24x,  xlab = "", ylab = "")
+abline(reg27ORP) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("ORP",side=2,col="black",line=2.5)
+
+reg35ORP<-lm(sORP35HourW24x~fn_35)
+plot(fn_35,sORP35HourW24x,  xlab = "", ylab = "")
+abline(reg35ORP) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("ORP",side=2,col="black",line=2.5)
+
+reg43ORP<-lm(sORP43HourW24x~fn_43)
+plot(fn_43,sORP43HourW24x,  xlab = "", ylab = "")
+abline(reg43ORP) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("ORP",side=2,col="black",line=2.5)
+#stnLoc<-c(25, 29, 30, 27, 35, 43, 33,11,22,17,31,26,14,19,12,49,20,36)
+reg33ORP<-lm(sORP33HourW24x~fn_33)
+plot(fn_33,sORP33HourW24x,  xlab = "", ylab = "")
+abline(reg33ORP) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("ORP",side=2,col="black",line=2.5)
+
+reg11ORP<-lm(sORP11HourW24x~fn_11)
+plot(fn_11,sORP11HourW24x,  xlab = "", ylab = "")
+abline(reg11ORP) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("ORP",side=2,col="black",line=2.5)
+
+reg22ORP<-lm(sORP22HourW24x~fn_22)
+plot(fn_22,sORP22HourW24x,  xlab = "", ylab = "")
+abline(reg22ORP) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("ORP",side=2,col="black",line=2.5)
+
+
+reg17ORP<-lm(sORP17HourW24x~fn_17)
+plot(fn_17,sORP17HourW24x,  xlab = "", ylab = "")
+abline(reg17ORP) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("ORP",side=2,col="black",line=2.5)
+
+
+reg31ORP<-lm(sORP31HourW24x~fn_31)
+plot(fn_31,sORP31HourW24x,  xlab = "", ylab = "")
+abline(reg31ORP) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("ORP",side=2,col="black",line=2.5)
+
+reg26ORP<-lm(sORP26HourW24x~fn_26)
+plot(fn_26,sORP26HourW24x,  xlab = "", ylab = "")
+abline(reg26ORP) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("ORP",side=2,col="black",line=2.5)
+
+reg14ORP<-lm(sORP14HourW24x~fn_14)
+plot(fn_14,sORP14HourW24x,  xlab = "", ylab = "")
+abline(reg14ORP) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("ORP",side=2,col="black",line=2.5)
+
+reg19ORP<-lm(sORP19HourW24x~fn_19)
+plot(fn_19,sORP19HourW24x,  xlab = "", ylab = "")
+abline(reg19ORP) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("ORP",side=2,col="black",line=2.5)
+
+reg12ORP<-lm(sORP12HourW24x~fn_12)
+plot(fn_12,sORP12HourW24x,  xlab = "", ylab = "")
+abline(reg12ORP) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("ORP",side=2,col="black",line=2.5)
+
+reg49ORP<-lm(sORP49HourW24x~fn_49)
+plot(fn_49,sORP49HourW24x,  xlab = "", ylab = "")
+abline(reg49ORP) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("ORP",side=2,col="black",line=2.5)
+
+reg20ORP<-lm(sORP20HourW24x~fn_20)
+plot(fn_20,sORP20HourW24x,  xlab = "", ylab = "")
+abline(reg20ORP) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("ORP",side=2,col="black",line=2.5)
+
+reg36ORP<-lm(sORP36HourW24x~fn_36)
+plot(fn_36,sORP36HourW24x,  xlab = "", ylab = "")
+abline(reg36ORP) 
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5)  
+mtext("ORP",side=2,col="black",line=2.5)
+
+```
+#ORP vs PH
+
+### Excellent relationship observed in ORP vs PH
+```{r}
+
+par(mfrow=c(1,1))
+
+
+#ORP vs PH
+
+reg25ORP<-lm(sORP25HourW24x~sPH25HourW24x)
+plot(sPH25HourW24x,sORP25HourW24x,  xlab = "", ylab = "")
+abline(reg25ORP)
+
+
+reg29ORP<-lm(sORP29HourW24x~sPH29HourW24x)
+plot(sPH29HourW24x,sORP29HourW24x,  xlab = "", ylab = "")
+abline(reg29ORP)
+
+reg30ORP<-lm(sORP30HourW24x~sPH30HourW24x)
+plot(sPH30HourW24x,sORP30HourW24x,  xlab = "", ylab = "")
+abline(reg30ORP)
+
+reg27ORP<-lm(sORP27HourW24x~sPH27HourW24x)
+plot(sPH27HourW24x,sORP27HourW24x,  xlab = "", ylab = "")
+abline(reg27ORP)
+
+reg35ORP<-lm(sORP35HourW24x~sPH35HourW24x)
+plot(sPH35HourW24x,sORP35HourW24x,  xlab = "", ylab = "")
+abline(reg35ORP)
+
+reg43ORP<-lm(sORP43HourW24x~sPH43HourW24x)
+plot(sPH43HourW24x,sORP43HourW24x,  xlab = "", ylab = "")
+abline(reg43ORP)
+#stnLoc<-c(25, 29, 30, 27, 35, 43, 33,11,22,17,31,26,14,19,12,49,20,36)
+reg33ORP<-lm(sORP33HourW24x~sPH33HourW24x)
+plot(sPH33HourW24x,sORP33HourW24x,  xlab = "", ylab = "")
+abline(reg33ORP)
+
+reg11ORP<-lm(sORP11HourW24x~sPH11HourW24x)
+plot(sPH11HourW24x,sORP11HourW24x,  xlab = "", ylab = "")
+abline(reg11ORP)
+
+reg22ORP<-lm(sORP22HourW24x~sPH22HourW24x)
+plot(sPH22HourW24x,sORP22HourW24x,  xlab = "", ylab = "")
+abline(reg22ORP)
+
+
+reg17ORP<-lm(sORP17HourW24x~sPH17HourW24x)
+plot(sPH17HourW24x,sORP17HourW24x,  xlab = "", ylab = "")
+abline(reg17ORP)
+
+
+reg31ORP<-lm(sORP31HourW24x~sPH31HourW24x)
+plot(sPH31HourW24x,sORP31HourW24x,  xlab = "", ylab = "")
+abline(reg31ORP)
+
+reg26ORP<-lm(sORP26HourW24x~sPH26HourW24x)
+plot(sPH26HourW24x,sORP26HourW24x,  xlab = "", ylab = "")
+abline(reg26ORP)
+
+reg14ORP<-lm(sORP14HourW24x~sPH14HourW24x)
+plot(sPH14HourW24x,sORP14HourW24x,  xlab = "", ylab = "")
+abline(reg14ORP)
+
+reg19ORP<-lm(sORP19HourW24x~sPH19HourW24x)
+plot(sPH19HourW24x,sORP19HourW24x,  xlab = "", ylab = "")
+abline(reg19ORP)
+
+reg12ORP<-lm(sORP12HourW24x~fn_12)
+plot(fn_12,sORP12HourW24x,  xlab = "", ylab = "")
+abline(reg12ORP)
+
+reg49ORP<-lm(sORP49HourW24x~sPH49HourW24x)
+plot(sPH49HourW24x,sORP49HourW24x,  xlab = "", ylab = "")
+abline(reg49ORP)
+
+reg20ORP<-lm(sORP20HourW24x~sPH20HourW24x)
+plot(sPH20HourW24x,sORP20HourW24x,  xlab = "", ylab = "")
+abline(reg20ORP)
+
+reg36ORP<-lm(sORP36HourW24x~sPH36HourW24x)
+plot(sPH36HourW24x,sORP36HourW24x,  xlab = "", ylab = "")
+abline(reg36ORP)
+
+
+
+
+
+
+
+
+
+
+
+```
+
+# ORP vs Conductivity
+
+```{r}
+
+par(mfrow=c(1,1))
+
+
+#ORP vs CON
+
+reg25ORP<-lm(sORP25HourW24x~sCON25HourW24x)
+plot(sCON25HourW24x,sORP25HourW24x,  xlab = "", ylab = "")
+abline(reg25ORP)
+
+
+reg29ORP<-lm(sORP29HourW24x~sCON29HourW24x)
+plot(sCON29HourW24x,sORP29HourW24x,  xlab = "", ylab = "")
+abline(reg29ORP)
+
+reg30ORP<-lm(sORP30HourW24x~sCON30HourW24x)
+plot(sCON30HourW24x,sORP30HourW24x,  xlab = "", ylab = "")
+abline(reg30ORP)
+
+reg27ORP<-lm(sORP27HourW24x~sCON27HourW24x)
+plot(sCON27HourW24x,sORP27HourW24x,  xlab = "", ylab = "")
+abline(reg27ORP)
+
+reg35ORP<-lm(sORP35HourW24x~sCON35HourW24x)
+plot(sCON35HourW24x,sORP35HourW24x,  xlab = "", ylab = "")
+abline(reg35ORP)
+
+reg43ORP<-lm(sORP43HourW24x~sCON43HourW24x)
+plot(sCON43HourW24x,sORP43HourW24x,  xlab = "", ylab = "")
+abline(reg43ORP)
+#stnLoc<-c(25, 29, 30, 27, 35, 43, 33,11,22,17,31,26,14,19,12,49,20,36)
+reg33ORP<-lm(sORP33HourW24x~sCON33HourW24x)
+plot(sCON33HourW24x,sORP33HourW24x,  xlab = "", ylab = "")
+abline(reg33ORP)
+
+reg11ORP<-lm(sORP11HourW24x~sCON11HourW24x)
+plot(sCON11HourW24x,sORP11HourW24x,  xlab = "", ylab = "")
+abline(reg11ORP)
+
+reg22ORP<-lm(sORP22HourW24x~sCON22HourW24x)
+plot(sCON22HourW24x,sORP22HourW24x,  xlab = "", ylab = "")
+abline(reg22ORP)
+
+
+reg17ORP<-lm(sORP17HourW24x~sCON17HourW24x)
+plot(sCON17HourW24x,sORP17HourW24x,  xlab = "", ylab = "")
+abline(reg17ORP)
+
+
+reg31ORP<-lm(sORP31HourW24x~sCON31HourW24x)
+plot(sCON31HourW24x,sORP31HourW24x,  xlab = "", ylab = "")
+abline(reg31ORP)
+
+reg26ORP<-lm(sORP26HourW24x~sCON26HourW24x)
+plot(sCON26HourW24x,sORP26HourW24x,  xlab = "", ylab = "")
+abline(reg26ORP)
+
+reg14ORP<-lm(sORP14HourW24x~sCON14HourW24x)
+plot(sCON14HourW24x,sORP14HourW24x,  xlab = "", ylab = "")
+abline(reg14ORP)
+
+reg19ORP<-lm(sORP19HourW24x~sCON19HourW24x)
+plot(sCON19HourW24x,sORP19HourW24x,  xlab = "", ylab = "")
+abline(reg19ORP)
+
+reg12ORP<-lm(sORP12HourW24x~fn_12)
+plot(fn_12,sORP12HourW24x,  xlab = "", ylab = "")
+abline(reg12ORP)
+
+reg49ORP<-lm(sORP49HourW24x~sCON49HourW24x)
+plot(sCON49HourW24x,sORP49HourW24x,  xlab = "", ylab = "")
+abline(reg49ORP)
+
+reg20ORP<-lm(sORP20HourW24x~sCON20HourW24x)
+plot(sCON20HourW24x,sORP20HourW24x,  xlab = "", ylab = "")
+abline(reg20ORP)
+
+reg36ORP<-lm(sORP36HourW24x~sCON36HourW24x)
+plot(sCON36HourW24x,sORP36HourW24x,  xlab = "", ylab = "")
+abline(reg36ORP)
+
+
+
+
+
+```
+
+CON vs PH
+```{r}
+par(mfrow=c(1,1))
+
+
+#ORP vs PH
+
+reg25CON<-lm(sCON25HourW24x~sPH25HourW24x)
+plot(sPH25HourW24x,sCON25HourW24x,  xlab = "", ylab = "")
+abline(reg25CON)
+
+
+reg29CON<-lm(sCON29HourW24x~sPH29HourW24x)
+plot(sPH29HourW24x,sCON29HourW24x,  xlab = "", ylab = "")
+abline(reg29CON)
+
+reg30CON<-lm(sCON30HourW24x~sPH30HourW24x)
+plot(sPH30HourW24x,sCON30HourW24x,  xlab = "", ylab = "")
+abline(reg30CON)
+
+reg27CON<-lm(sCON27HourW24x~sPH27HourW24x)
+plot(sPH27HourW24x,sCON27HourW24x,  xlab = "", ylab = "")
+abline(reg27CON)
+
+reg35CON<-lm(sCON35HourW24x~sPH35HourW24x)
+plot(sPH35HourW24x,sCON35HourW24x,  xlab = "", ylab = "")
+abline(reg35CON)
+
+reg43CON<-lm(sCON43HourW24x~sPH43HourW24x)
+plot(sPH43HourW24x,sCON43HourW24x,  xlab = "", ylab = "")
+abline(reg43CON)
+#stnLoc<-c(25, 29, 30, 27, 35, 43, 33,11,22,17,31,26,14,19,12,49,20,36)
+reg33CON<-lm(sCON33HourW24x~sPH33HourW24x)
+plot(sPH33HourW24x,sCON33HourW24x,  xlab = "", ylab = "")
+abline(reg33CON)
+
+reg11CON<-lm(sCON11HourW24x~sPH11HourW24x)
+plot(sPH11HourW24x,sCON11HourW24x,  xlab = "", ylab = "")
+abline(reg11CON)
+
+reg22CON<-lm(sCON22HourW24x~sPH22HourW24x)
+plot(sPH22HourW24x,sCON22HourW24x,  xlab = "", ylab = "")
+abline(reg22CON)
+
+
+reg17CON<-lm(sCON17HourW24x~sPH17HourW24x)
+plot(sPH17HourW24x,sCON17HourW24x,  xlab = "", ylab = "")
+abline(reg17CON)
+
+
+reg31CON<-lm(sCON31HourW24x~sPH31HourW24x)
+plot(sPH31HourW24x,sCON31HourW24x,  xlab = "", ylab = "")
+abline(reg31CON)
+
+reg26CON<-lm(sCON26HourW24x~sPH26HourW24x)
+plot(sPH26HourW24x,sCON26HourW24x,  xlab = "", ylab = "")
+abline(reg26CON)
+
+reg14CON<-lm(sCON14HourW24x~sPH14HourW24x)
+plot(sPH14HourW24x,sCON14HourW24x,  xlab = "", ylab = "")
+abline(reg14CON)
+
+reg19CON<-lm(sCON19HourW24x~sPH19HourW24x)
+plot(sPH19HourW24x,sCON19HourW24x,  xlab = "", ylab = "")
+abline(reg19CON)
+
+reg12CON<-lm(sCON12HourW24x~fn_12)
+plot(fn_12,sCON12HourW24x,  xlab = "", ylab = "")
+abline(reg12CON)
+
+reg49CON<-lm(sCON49HourW24x~sPH49HourW24x)
+plot(sPH49HourW24x,sCON49HourW24x,  xlab = "", ylab = "")
+abline(reg49CON)
+
+reg20CON<-lm(sCON20HourW24x~sPH20HourW24x)
+plot(sPH20HourW24x,sCON20HourW24x,  xlab = "", ylab = "")
+abline(reg20CON)
+
+reg36CON<-lm(sCON36HourW24x~sPH36HourW24x)
+plot(sPH36HourW24x,sCON36HourW24x,  xlab = "", ylab = "")
+abline(reg36CON)
+
+
+
+
+```
+
+
+# ORP, MCM and pH Together
+
+```{r}
+
+par(mar=c(5.1,4.1,4.1,4))
+#25#####################################################
+reg25PH<-lm(sPH25HourW24x~fn_25)
+plot(fn_25,sPH25HourW24x, type='p', pch=24, yaxt='n', col='green', xlab = "", ylab = "")
+abline(reg25PH, col='green')
+axis(2, ylim=c(8,10),col="black",las=1)
+par(new=T)
+
+reg25ORP<-lm(sORP25HourW24x~fn_25)
+plot(fn_25,sORP25HourW24x, type='p', pch=18,axes=FALSE, col='red', xlab = "", ylab = "")
+abline(reg25ORP,axes=FALSE, col='red')
+axis(4, ylim=c(300,600),col="black",las=1)
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5) 
+mtext("ORP ",side=4,col="black",line=2.5)
+
+#29#####################################################
+reg29PH<-lm(sPH29HourW24x~fn_29)
+plot(fn_29,sPH29HourW24x, type='p', pch=24, yaxt='n', col='green' ,xlab = "", ylab = "")
+abline(reg29PH, axes=FALSE, col='green')
+axis(2, ylim=c(8,10),col="black",las=1)
+par(new=T)
+
+reg29ORP<-lm(sORP29HourW24x~fn_29)
+plot(fn_29,sORP29HourW24x, type='p', pch=18,axes=FALSE, col='red' ,xlab = "", ylab = "")
+abline(reg29ORP,axes=FALSE, col='red')
+axis(4, ylim=c(300,600),col="black",las=1)
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5) 
+mtext("ORP ",side=4,col="black",line=2.5)
+
+
+
+#30#####################################################
+reg30PH<-lm(sPH30HourW24x~fn_30)
+plot(fn_30,sPH30HourW24x, type='p', pch=24, yaxt='n', col='green' ,xlab = "", ylab = "")
+abline(reg30PH, axes=FALSE, col='green')
+axis(2, ylim=c(8,10),col="black",las=1)
+par(new=T)
+
+reg30ORP<-lm(sORP30HourW24x~fn_30)
+plot(fn_30,sORP30HourW24x, type='p', pch=18,yaxt='n', col='red' ,xlab = "", ylab = "")
+abline(reg30ORP,axes=FALSE, col='red')
+axis(4, ylim=c(300,600),col="black",las=1)
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5) 
+mtext("ORP ",side=4,col="black",line=2.5)
+#27#####################################################
+reg27PH<-lm(sPH27HourW24x~fn_27)
+plot(fn_27,sPH27HourW24x, type='p', pch=24, yaxt='n', col='green' ,xlab = "", ylab = "")
+abline(reg27PH, axes=FALSE, col='green')
+axis(2, ylim=c(8,10),col="black",las=1)
+par(new=T)
+
+reg27ORP<-lm(sORP27HourW24x~fn_27)
+plot(fn_27,sORP27HourW24x, type='p', pch=18,axes=FALSE, col='red' ,xlab = "", ylab = "")
+abline(reg27ORP,axes=FALSE, col='red')
+axis(4, ylim=c(300,600),col="black",las=1)
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5) 
+mtext("ORP ",side=4,col="black",line=2.5)
+
+#35#####################################################
+reg35PH<-lm(sPH35HourW24x~fn_35)
+plot(fn_35,sPH35HourW24x, type='p', pch=24, yaxt='n', col='green' ,xlab = "", ylab = "")
+abline(reg35PH, axes=FALSE, col='green')
+axis(2, ylim=c(8,10),col="black",las=1)
+par(new=T)
+
+reg35ORP<-lm(sORP35HourW24x~fn_35)
+plot(fn_35,sORP35HourW24x, type='p', pch=18,axes=FALSE, col='red' ,xlab = "", ylab = "")
+abline(reg35ORP,axes=FALSE, col='red')
+axis(4, ylim=c(300,600),col="black",las=1)
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5) 
+mtext("ORP ",side=4,col="black",line=2.5)
+
+#43#####################################################
+reg43PH<-lm(sPH43HourW24x~fn_43)
+plot(fn_43,sPH43HourW24x, type='p', pch=24, yaxt='n', col='green' ,xlab = "", ylab = "")
+abline(reg43PH, axes=FALSE, col='green')
+axis(2, ylim=c(8,10),col="black",las=1)
+par(new=T)
+
+reg43ORP<-lm(sORP43HourW24x~fn_43)
+plot(fn_43,sORP43HourW24x, type='p', pch=18,axes=FALSE, col='red' ,xlab = "", ylab = "")
+abline(reg43ORP,axes=FALSE, col='red')
+axis(4, ylim=c(300,600),col="black",las=1)
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5) 
+mtext("ORP ",side=4,col="black",line=2.5)
+#33#####################################################
+reg33PH<-lm(sPH33HourW24x~fn_33)
+plot(fn_33,sPH33HourW24x, type='p', pch=24, yaxt='n', col='green' ,xlab = "", ylab = "")
+abline(reg33PH, axes=FALSE, col='green')
+axis(2, ylim=c(8,10),col="black",las=1)
+par(new=T)
+
+reg33ORP<-lm(sORP33HourW24x~fn_33)
+plot(fn_33,sORP33HourW24x, type='p', pch=18,axes=FALSE, col='red' ,xlab = "", ylab = "")
+abline(reg33ORP,axes=FALSE, col='red')
+axis(4, ylim=c(300,600),col="black",las=1)
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5) 
+mtext("ORP ",side=4,col="black",line=2.5)
+#11#####################################################
+reg11PH<-lm(sPH11HourW24x~fn_11)
+plot(fn_11,sPH11HourW24x, type='p', pch=24, yaxt='n', col='green' ,xlab = "", ylab = "")
+abline(reg11PH, axes=FALSE, col='green')
+axis(2, ylim=c(8,10),col="black",las=1)
+par(new=T)
+
+reg11ORP<-lm(sORP11HourW24x~fn_11)
+plot(fn_11,sORP11HourW24x, type='p', pch=18,axes=FALSE, col='red' ,xlab = "", ylab = "")
+abline(reg11ORP,axes=FALSE, col='red')
+axis(4, ylim=c(300,600),col="black",las=1)
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5) 
+mtext("ORP ",side=4,col="black",line=2.5)
+#22#####################################################
+reg22PH<-lm(sPH22HourW24x~fn_22)
+plot(fn_22,sPH22HourW24x, type='p', pch=24, yaxt='n', col='green' ,xlab = "", ylab = "")
+abline(reg22PH, axes=FALSE, col='green')
+axis(2, ylim=c(8,10),col="black",las=1)
+par(new=T)
+
+reg22ORP<-lm(sORP22HourW24x~fn_22)
+plot(fn_22,sORP22HourW24x, type='p', pch=18,axes=FALSE, col='red' ,xlab = "", ylab = "")
+abline(reg22ORP,axes=FALSE, col='red')
+axis(4, ylim=c(300,600),col="black",las=1)
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5) 
+mtext("ORP ",side=4,col="black",line=2.5)
+
+
+#stnLoc<-c(25, 29, 30, 27, 35, 43, 33,11,22,17,31,26,14,19,12,49,20,36)
+#17#####################################################
+reg17PH<-lm(sPH17HourW24x~fn_17)
+plot(fn_17,sPH17HourW24x, type='p', pch=24, yaxt='n', col='green' ,xlab = "", ylab = "")
+abline(reg17PH, axes=FALSE, col='green')
+axis(2, ylim=c(8,10),col="black",las=1)
+par(new=T)
+
+reg17ORP<-lm(sORP17HourW24x~fn_17)
+plot(fn_17,sORP17HourW24x, type='p', pch=18,axes=FALSE, col='red' ,xlab = "", ylab = "")
+abline(reg17ORP,axes=FALSE, col='red')
+axis(4, ylim=c(300,600),col="black",las=1)
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5) 
+mtext("ORP ",side=4,col="black",line=2.5)
+#31#####################################################
+reg31PH<-lm(sPH31HourW24x~fn_31)
+plot(fn_31,sPH31HourW24x, type='p', pch=24, yaxt='n', col='green' ,xlab = "", ylab = "")
+abline(reg31PH, axes=FALSE, col='green')
+axis(2, ylim=c(8,10),col="black",las=1)
+par(new=T)
+
+reg31ORP<-lm(sORP31HourW24x~fn_31)
+plot(fn_31,sORP31HourW24x, type='p', pch=18,axes=FALSE, col='red' ,xlab = "", ylab = "")
+abline(reg31ORP,axes=FALSE, col='red')
+axis(4, ylim=c(300,600),col="black",las=1)
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5) 
+mtext("ORP ",side=4,col="black",line=2.5)
+
+#26#####################################################
+reg26PH<-lm(sPH26HourW24x~fn_26)
+plot(fn_26,sPH26HourW24x, type='p', pch=24, yaxt='n', col='green' ,xlab = "", ylab = "")
+abline(reg26PH, axes=FALSE, col='green')
+axis(2, ylim=c(8,10),col="black",las=1)
+par(new=T)
+
+reg26ORP<-lm(sORP26HourW24x~fn_26)
+plot(fn_26,sORP26HourW24x, type='p', pch=18,axes=FALSE, col='red' ,xlab = "", ylab = "")
+abline(reg26ORP,axes=FALSE, col='red')
+axis(4, ylim=c(300,600),col="black",las=1)
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5) 
+mtext("ORP ",side=4,col="black",line=2.5)
+#14#####################################################
+reg14PH<-lm(sPH14HourW24x~fn_14)
+plot(fn_14,sPH14HourW24x, type='p', pch=24, yaxt='n', col='green' ,xlab = "", ylab = "")
+abline(reg14PH, axes=FALSE, col='green')
+axis(2, ylim=c(8,10),col="black",las=1)
+par(new=T)
+#stnLoc<-c(25, 29, 30, 27, 14, 43, 33,11,22,17,31,26,14,19,12,49,20,36)
+reg14ORP<-lm(sORP14HourW24x~fn_14)
+plot(fn_14,sORP14HourW24x, type='p', pch=18,axes=FALSE, col='red' ,xlab = "", ylab = "")
+abline(reg14ORP,axes=FALSE, col='red')
+axis(4, ylim=c(300,600),col="black",las=1)
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5) 
+mtext("ORP ",side=4,col="black",line=2.5)
+#19#####################################################
+reg19PH<-lm(sPH19HourW24x~fn_19)
+plot(fn_19,sPH19HourW24x, type='p', pch=24, yaxt='n', col='green' ,xlab = "", ylab = "")
+abline(reg19PH, axes=FALSE, col='green')
+axis(2, ylim=c(8,10),col="black",las=1)
+par(new=T)
+
+reg19ORP<-lm(sORP19HourW24x~fn_19)
+plot(fn_19,sORP19HourW24x, type='p', pch=18,axes=FALSE, col='red' ,xlab = "", ylab = "")
+abline(reg19ORP,axes=FALSE, col='red')
+axis(4, ylim=c(300,600),col="black",las=1)
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5) 
+mtext("ORP ",side=4,col="black",line=2.5)
+#12#####################################################
+reg12PH<-lm(sPH12HourW24x~fn_12)
+plot(fn_12,sPH12HourW24x, type='p', pch=24, yaxt='n', col='green' ,xlab = "", ylab = "")
+abline(reg12PH, axes=FALSE, col='green')
+axis(2, ylim=c(8,10),col="black",las=1)
+par(new=T)
+
+reg12ORP<-lm(sORP12HourW24x~fn_12)
+plot(fn_12,sORP12HourW24x, type='p', pch=18,axes=FALSE, col='red' ,xlab = "", ylab = "")
+abline(reg12ORP,axes=FALSE, col='red')
+axis(4, ylim=c(300,600),col="black",las=1)
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5) 
+mtext("ORP ",side=4,col="black",line=2.5)
+#49#####################################################
+reg49PH<-lm(sPH49HourW24x~fn_49)
+plot(fn_49,sPH49HourW24x, type='p', pch=24, yaxt='n', col='green' ,xlab = "", ylab = "")
+abline(reg49PH, axes=FALSE, col='green')
+axis(2, ylim=c(8,10),col="black",las=1)
+par(new=T)
+
+reg49ORP<-lm(sORP49HourW24x~fn_49)
+plot(fn_49,sORP49HourW24x, type='p', pch=18,axes=FALSE, col='red' ,xlab = "", ylab = "")
+abline(reg49ORP,axes=FALSE, col='red')
+axis(4, ylim=c(300,600),col="black",las=1)
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5) 
+mtext("ORP ",side=4,col="black",line=2.5)
+#20#####################################################
+reg20PH<-lm(sPH20HourW24x~fn_20)
+plot(fn_20,sPH20HourW24x, type='p', pch=24, yaxt='n', col='green' ,xlab = "", ylab = "")
+abline(reg20PH, axes=FALSE, col='green')
+axis(2, ylim=c(8,10),col="black",las=1)
+par(new=T)
+
+reg20ORP<-lm(sORP20HourW24x~fn_20 ,xlab = "", ylab = "")
+plot(fn_20,sORP20HourW24x, type='p', pch=18,axes=FALSE, col='red' ,xlab = "", ylab = "")
+abline(reg20ORP,axes=FALSE, col='red')
+axis(4, ylim=c(300,600),col="black",las=1)
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5) 
+mtext("ORP ",side=4,col="black",line=2.5)
+#36#####################################################
+reg36PH<-lm(sPH36HourW24x~fn_36)
+plot(fn_36,sPH36HourW24x, type='p', pch=24, yaxt='n', col='green' ,xlab = "", ylab = "")
+abline(reg36PH, axes=FALSE, col='green')
+axis(2, ylim=c(8,10),col="black",las=1)
+par(new=T)
+
+reg36ORP<-lm(sORP36HourW24x~fn_36)
+plot(fn_36,sORP36HourW24x, type='p', pch=18,axes=FALSE, col='red' ,xlab = "", ylab = "")
+abline(reg36ORP,axes=FALSE, col='red')
+axis(4, ylim=c(300,600),col="black",las=1)
+mtext("NH2CL (mg/L) ",side=1,col="black",line=2.5) 
+mtext("pH ",side=2,col="black",line=2.5) 
+mtext("ORP ",side=4,col="black",line=2.5)
+
+```
+
+
+
+
+
+
+
+## Each Hour Analysis
+```{r}
+set.seed(1221113)
+ par(mar=rep(3, 4), mfrow=c(3,1))
+ # 1 indicate time at 12:00, 18: 9:00 am , 3: "17pm"
+
+ plot(sORP25HourW[,1]);lines(1:62, sORP25HourW[,1], type="l", col="red", main= "S25"); par(new=TRUE)
+ plot(sORP25HourW[,18]);lines(1:62, sORP25HourW[,18], type="l", col="red")
+ plot(sORP25HourW[,36]);lines(1:62, sORP25HourW[,36], type="l", col="red")
+
+plot(sCON25HourW[,1]);lines(1:62, sCON25HourW[,1], type="l", col="red")
+plot(sCON25HourW[,18]);lines(1:62, sCON25HourW[,18], type="l", col="red")
+plot(sCON25HourW[,36]);lines(1:62, sCON25HourW[,36], type="l", col="red")
+ 
+ 
+ plot(sPH25HourW[,1]);lines(1:61, sPH25HourW[,1], type="l", col="red")
+ plot(sPH25HourW[,18]);lines(1:61, sPH25HourW[,18], type="l", col="red")
+ plot(sPH25HourW[,36]);lines(1:61, sPH25HourW[,36], type="l", col="red")
+
+
+
+
+plot(sORP29HourW[,1]);lines(1:62, sORP29HourW[,1], type="l", col="red", main= "S29")
+ plot(sORP29HourW[,18]);lines(1:62, sORP29HourW[,18], type="l", col="red")
+ plot(sORP29HourW[,36]);lines(1:62, sORP29HourW[,36], type="l", col="red")
+
+plot(sCON29HourW[,1]);lines(1:62, sCON29HourW[,1], type="l", col="red")
+plot(sCON29HourW[,18]);lines(1:62, sCON29HourW[,18], type="l", col="red")
+ plot(sCON29HourW[,36]);lines(1:62, sCON29HourW[,36], type="l", col="red")
+ 
+ plot(sPH29HourW[,1]);lines(1:61, sPH29HourW[,1], type="l", col="red")
+ plot(sPH29HourW[,18]);lines(1:61, sPH29HourW[,18], type="l", col="red")
+ plot(sPH29HourW[,36]);lines(1:61, sPH29HourW[,36], type="l", col="red")
+
+
+
+plot(sORP30HourW[,1]);lines(1:62, sORP30HourW[,1], type="l", col="red", main= "S30")
+ plot(sORP30HourW[,18]);lines(1:62, sORP30HourW[,18], type="l", col="red")
+ plot(sORP30HourW[,36]);lines(1:62, sORP30HourW[,36], type="l", col="red")
+ 
+ plot(sCON30HourW[,1]);lines(1:62, sCON30HourW[,1], type="l", col="red")
+ plot(sCON30HourW[,18]);lines(1:62, sCON30HourW[,18], type="l", col="red")
+plot(sCON30HourW[,36]);lines(1:62, sCON30HourW[,36], type="l", col="red")
+
+ plot(sPH30HourW[,1]);lines(1:61, sPH30HourW[,1], type="l", col="red")
+ plot(sPH30HourW[,18]);lines(1:61, sPH30HourW[,18], type="l", col="red")
+ plot(sPH30HourW[,36]);lines(1:61, sPH30HourW[,36], type="l", col="red")
+
+
+
+plot(sORP27HourW[,1]);lines(1:62, sORP27HourW[,1], type="l", col="red", main= "S27")
+ plot(sORP27HourW[,18]);lines(1:62, sORP27HourW[,18], type="l", col="red")
+ plot(sORP27HourW[,36]);lines(1:62, sORP27HourW[,36], type="l", col="red")
+ 
+plot(sCON27HourW[,1]);lines(1:62, sCON27HourW[,1], type="l", col="red")
+plot(sCON27HourW[,18]);lines(1:62, sCON27HourW[,18], type="l", col="red")
+plot(sCON27HourW[,36]);lines(1:62, sCON27HourW[,36], type="l", col="red")
+ 
+ plot(sPH27HourW[,1]);lines(1:61, sPH27HourW[,1], type="l", col="red")
+ plot(sPH27HourW[,18]);lines(1:61, sPH27HourW[,18], type="l", col="red")
+ plot(sPH27HourW[,36]);lines(1:61, sPH27HourW[,36], type="l", col="red")
+
+
+
+plot(sORP35HourW[,1]);lines(1:62, sORP35HourW[,1], type="l", col="red", main= "S35")
+ plot(sORP35HourW[,18]);lines(1:62, sORP35HourW[,18], type="l", col="red")
+ plot(sORP35HourW[,36]);lines(1:62, sORP35HourW[,36], type="l", col="red")
+ 
+plot(sCON35HourW[,1]);lines(1:62, sCON35HourW[,1], type="l", col="red")
+ plot(sCON35HourW[,18]);lines(1:62, sCON35HourW[,18], type="l", col="red")
+ plot(sCON35HourW[,36]);lines(1:62, sCON35HourW[,36], type="l", col="red")
+
+
+
+ plot(sPH35HourW[,1]);lines(1:61, sPH35HourW[,1], type="l", col="red")
+ plot(sPH35HourW[,18]);lines(1:61, sPH35HourW[,18], type="l", col="red")
+ plot(sPH35HourW[,36]);lines(1:61, sPH35HourW[,36], type="l", col="red")
+
+plot(sORP43HourW[,1]);lines(1:62, sORP43HourW[,1], type="l", col="red", main= "S43")
+ plot(sORP43HourW[,18]);lines(1:62, sORP43HourW[,18], type="l", col="red")
+ plot(sORP43HourW[,36]);lines(1:62, sORP43HourW[,36], type="l", col="red")
+
+
+ plot(sCON43HourW[,1]);lines(1:62, sCON43HourW[,1], type="l", col="red")
+ plot(sCON43HourW[,18]);lines(1:62, sCON43HourW[,18], type="l", col="red")
+ plot(sCON43HourW[,36]);lines(1:62, sCON43HourW[,36], type="l", col="red")
+
+ plot(sPH43HourW[,1]);lines(1:61, sPH43HourW[,1], type="l", col="red")
+ plot(sPH43HourW[,18]);lines(1:61, sPH43HourW[,18], type="l", col="red")
+ plot(sPH43HourW[,36]);lines(1:61, sPH43HourW[,36], type="l", col="red")
+
+# sPH25, sPH29, sPH30, sPH27, sPH35, sPH43, sPH33, sPH11, sPH22, sPH17, sPH31, sPH26, sPH14, sPH19,  sPH12, sPH49, sPH20, sPH36
+
+
+plot(sORP33HourW[,1]);lines(1:62, sORP33HourW[,1], type="l", col="red", main= "S33")
+ plot(sORP33HourW[,18]);lines(1:62, sORP33HourW[,18], type="l", col="red")
+ plot(sORP33HourW[,36]);lines(1:62, sORP33HourW[,36], type="l", col="red")
+ 
+plot(sCON33HourW[,1]);lines(1:62, sCON33HourW[,1], type="l", col="red")
+ plot(sCON33HourW[,18]);lines(1:62, sCON33HourW[,18], type="l", col="red")
+ plot(sCON33HourW[,36]);lines(1:62, sCON33HourW[,36], type="l", col="red")
+
+ plot(sPH33HourW[,1]);lines(1:61, sPH33HourW[,1], type="l", col="red")
+ plot(sPH33HourW[,18]);lines(1:61, sPH33HourW[,18], type="l", col="red")
+ plot(sPH33HourW[,36]);lines(1:61, sPH33HourW[,36], type="l", col="red")
+
+ plot(sORP11HourW[,1]);lines(1:62, sORP11HourW[,1], type="l", col="red", main= "S11")
+ plot(sORP11HourW[,18]);lines(1:62, sORP11HourW[,18], type="l", col="red")
+ plot(sORP11HourW[,36]);lines(1:62, sORP11HourW[,36], type="l", col="red")
+
+
+
+plot(sCON11HourW[,1]);lines(1:62, sCON11HourW[,18], type="l", col="red")
+plot(sCON11HourW[,18]);lines(1:62, sCON11HourW[,18], type="l", col="red")
+ plot(sCON11HourW[,36]);lines(1:62, sCON11HourW[,36], type="l", col="red")
+ 
+ plot(sPH11HourW[,1]);lines(1:61, sPH11HourW[,1], type="l", col="red")
+ plot(sPH11HourW[,18]);lines(1:61, sPH11HourW[,18], type="l", col="red")
+ plot(sPH11HourW[,36]);lines(1:61, sPH11HourW[,36], type="l", col="red")
+
+plot(sORP22HourW[,1]);lines(1:62, sORP22HourW[,1], type="l", col="red", main= "S22")
+ plot(sORP22HourW[,18]);lines(1:62, sORP22HourW[,18], type="l", col="red")
+ plot(sORP22HourW[,36]);lines(1:62, sORP22HourW[,36], type="l", col="red")
+
+
+plot(sCON22HourW[,1]);lines(1:62, sCON22HourW[,1], type="l", col="red")
+plot(sCON22HourW[,18]);lines(1:62, sCON22HourW[,18], type="l", col="red")
+ plot(sCON22HourW[,36]);lines(1:62, sCON22HourW[,36], type="l", col="red")
+ 
+ plot(sPH22HourW[,1]);lines(1:61, sPH22HourW[,1], type="l", col="red")
+ plot(sPH22HourW[,18]);lines(1:61, sPH22HourW[,18], type="l", col="red")
+ plot(sPH22HourW[,36]);lines(1:61, sPH22HourW[,36], type="l", col="red")
+
+plot(sORP17HourW[,1]);lines(1:62, sORP17HourW[,1], type="l", col="red", main= "S17")
+ plot(sORP17HourW[,18]);lines(1:62, sORP17HourW[,18], type="l", col="red")
+ plot(sORP17HourW[,36]);lines(1:62, sORP17HourW[,36], type="l", col="red")
+
+
+ plot(sCON17HourW[,1]);lines(1:62, sCON17HourW[,1], type="l", col="red")
+ plot(sCON17HourW[,18]);lines(1:62, sCON17HourW[,18], type="l", col="red")
+ plot(sCON17HourW[,36]);lines(1:62, sCON17HourW[,36], type="l", col="red")
+
+ plot(sPH17HourW[,1]);lines(1:61, sPH17HourW[,1], type="l", col="red")
+ plot(sPH17HourW[,18]);lines(1:61, sPH17HourW[,18], type="l", col="red")
+ plot(sPH17HourW[,36]);lines(1:61, sPH17HourW[,36], type="l", col="red")
+
+
+plot(sORP31HourW[,1]);lines(1:62, sORP31HourW[,1], type="l", col="red", main= "S31")
+ plot(sORP31HourW[,18]);lines(1:62, sORP31HourW[,18], type="l", col="red")
+ plot(sORP31HourW[,36]);lines(1:62, sORP31HourW[,36], type="l", col="red")
+
+ plot(sCON31HourW[,1]);lines(1:62, sCON31HourW[,1], type="l", col="red")
+ plot(sCON31HourW[,18]);lines(1:62, sCON31HourW[,18], type="l", col="red")
+ plot(sCON31HourW[,36]);lines(1:62, sCON31HourW[,36], type="l", col="red")
+
+ plot(sPH31HourW[,1]);lines(1:61, sPH31HourW[,1], type="l", col="red")
+ plot(sPH31HourW[,18]);lines(1:61, sPH31HourW[,18], type="l", col="red")
+ plot(sPH31HourW[,36]);lines(1:61, sPH31HourW[,36], type="l", col="red")
+
+plot(sORP26HourW[,1]);lines(1:62, sORP26HourW[,1], type="l", col="red", main= "S26")
+ plot(sORP26HourW[,18]);lines(1:62, sORP26HourW[,18], type="l", col="red")
+ plot(sORP26HourW[,36]);lines(1:62, sORP26HourW[,36], type="l", col="red")
+
+
+plot(sCON26HourW[,1]);lines(1:62, sCON26HourW[,1], type="l", col="red")
+plot(sCON26HourW[,18]);lines(1:62, sCON26HourW[,18], type="l", col="red")
+ plot(sCON26HourW[,36]);lines(1:62, sCON26HourW[,36], type="l", col="red")
+ 
+ plot(sPH26HourW[,1]);lines(1:61, sPH26HourW[,1], type="l", col="red")
+ plot(sPH26HourW[,18]);lines(1:61, sPH26HourW[,18], type="l", col="red")
+ plot(sPH26HourW[,36]);lines(1:61, sPH26HourW[,36], type="l", col="red")
+
+plot(sORP14HourW[,1]);lines(1:62, sORP14HourW[,1], type="l", col="red", main= "S14")
+ plot(sORP14HourW[,18]);lines(1:62, sORP14HourW[,18], type="l", col="red")
+ plot(sORP14HourW[,36]);lines(1:62, sORP14HourW[,36], type="l", col="red")
+
+plot(sCON14HourW[,1]);lines(1:62, sCON14HourW[,1], type="l", col="red")
+plot(sCON14HourW[,18]);lines(1:62, sCON14HourW[,18], type="l", col="red")
+ plot(sCON14HourW[,36]);lines(1:62, sCON14HourW[,36], type="l", col="red")
+ 
+ plot(sPH14HourW[,1]);lines(1:61, sPH14HourW[,1], type="l", col="red")
+ plot(sPH14HourW[,18]);lines(1:61, sPH14HourW[,18], type="l", col="red")
+ plot(sPH14HourW[,36]);lines(1:61, sPH14HourW[,36], type="l", col="red")
+
+plot(sORP19HourW[,1]);lines(1:62, sORP19HourW[,1], type="l", col="red", main= "S19")
+ plot(sORP19HourW[,18]);lines(1:62, sORP19HourW[,18], type="l", col="red")
+ plot(sORP19HourW[,36]);lines(1:62, sORP19HourW[,36], type="l", col="red")
+
+plot(sCON19HourW[,1]);lines(1:62, sCON19HourW[,1], type="l", col="red")
+plot(sCON19HourW[,18]);lines(1:62, sCON19HourW[,18], type="l", col="red")
+ plot(sCON19HourW[,36]);lines(1:62, sCON19HourW[,36], type="l", col="red")
+ 
+ plot(sPH19HourW[,1]);lines(1:61, sPH19HourW[,1], type="l", col="red")
+ plot(sPH19HourW[,18]);lines(1:61, sPH19HourW[,18], type="l", col="red")
+ plot(sPH19HourW[,36]);lines(1:61, sPH19HourW[,36], type="l", col="red")
+
+plot(sORP12HourW[,1]);lines(1:62, sORP12HourW[,1], type="l", col="red", main= "S12")
+ plot(sORP12HourW[,18]);lines(1:62, sORP12HourW[,18], type="l", col="red")
+ plot(sORP12HourW[,36]);lines(1:62, sORP12HourW[,36], type="l", col="red")
+
+plot(sCON12HourW[,1]);lines(1:62, sCON12HourW[,1], type="l", col="red")
+plot(sCON12HourW[,18]);lines(1:62, sCON12HourW[,18], type="l", col="red")
+ plot(sCON12HourW[,36]);lines(1:62, sCON12HourW[,36], type="l", col="red")
+ 
+ plot(sPH12HourW[,1]);lines(1:61, sPH12HourW[,1], type="l", col="red")
+ plot(sPH12HourW[,18]);lines(1:61, sPH12HourW[,18], type="l", col="red")
+ plot(sPH12HourW[,36]);lines(1:61, sPH12HourW[,36], type="l", col="red")
+
+plot(sORP49HourW[,1]);lines(1:62, sORP49HourW[,1], type="l", col="red", main= "S49")
+ plot(sORP49HourW[,18]);lines(1:62, sORP49HourW[,18], type="l", col="red")
+ plot(sORP49HourW[,36]);lines(1:62, sORP49HourW[,36], type="l", col="red")
+
+
+plot(sCON49HourW[,1]);lines(1:62, sCON49HourW[,1], type="l", col="red")
+plot(sCON49HourW[,18]);lines(1:62, sCON49HourW[,18], type="l", col="red")
+ plot(sCON49HourW[,36]);lines(1:62, sCON49HourW[,36], type="l", col="red")
+ 
+ plot(sPH49HourW[,1]);lines(1:61, sPH49HourW[,1], type="l", col="red")
+ plot(sPH49HourW[,18]);lines(1:61, sPH49HourW[,18], type="l", col="red")
+ plot(sPH49HourW[,36]);lines(1:61, sPH49HourW[,36], type="l", col="red")
+
+
+
+plot(sORP20HourW[,1]);lines(1:62, sORP20HourW[,1], type="l", col="red", main= "S20")
+ plot(sORP20HourW[,18]);lines(1:62, sORP20HourW[,18], type="l", col="red")
+ plot(sORP20HourW[,36]);lines(1:62, sORP20HourW[,36], type="l", col="red")
+
+
+plot(sCON20HourW[,1]);lines(1:62, sCON20HourW[,1], type="l", col="red")
+plot(sCON20HourW[,18]);lines(1:62, sCON20HourW[,18], type="l", col="red")
+ plot(sCON20HourW[,36]);lines(1:62, sCON20HourW[,36], type="l", col="red")
+ 
+ plot(sPH20HourW[,1]);lines(1:61, sPH20HourW[,1], type="l", col="red")
+ plot(sPH20HourW[,18]);lines(1:61, sPH20HourW[,18], type="l", col="red")
+ plot(sPH20HourW[,36]);lines(1:61, sPH20HourW[,36], type="l", col="red")
+
+plot(sORP36HourW[,1]);lines(1:62, sORP36HourW[,1], type="l", col="red", main= "S36")
+ plot(sORP36HourW[,18]);lines(1:62, sORP36HourW[,18], type="l", col="red")
+ plot(sORP36HourW[,36]);lines(1:62, sORP36HourW[,36], type="l", col="red")
+
+plot(sCON36HourW[,1]);lines(1:62, sCON36HourW[,1], type="l", col="red")
+plot(sCON36HourW[,18]);lines(1:62, sCON36HourW[,18], type="l", col="red")
+ plot(sCON36HourW[,36]);lines(1:62, sCON36HourW[,36], type="l", col="red")
+ 
+ plot(sPH36HourW[,1]);lines(1:61, sPH36HourW[,1], type="l", col="red")
+ plot(sPH36HourW[,18]);lines(1:61, sPH36HourW[,18], type="l", col="red")
+ plot(sPH36HourW[,36]);lines(1:61, sPH36HourW[,36], type="l", col="red")
+
+
+
+```
+
+
+```{r}
+#Combine plot CON
+
+plot(range(1:62), range(c(sCON25HourW[,1],sCON25HourW[,18], sCON25HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sCON25HourW[,1], col="red")
+lines(1:62, sCON25HourW[,18], col="blue")
+lines(1:62, sCON25HourW[,36], col="green")
+
+
+
+
+plot(range(1:62), range(c(sCON29HourW[,1],sCON29HourW[,18], sCON29HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sCON29HourW[,1], col="red")
+lines(1:62, sCON29HourW[,18], col="blue")
+lines(1:62, sCON29HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sCON30HourW[,1],sCON30HourW[,18], sCON30HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sCON30HourW[,1], col="red")
+lines(1:62, sCON30HourW[,18], col="blue")
+lines(1:62, sCON30HourW[,36], col="green")
+
+
+
+
+
+plot(range(1:62), range(c(sCON27HourW[,1],sCON27HourW[,18], sCON27HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sCON27HourW[,1], col="red")
+lines(1:62, sCON27HourW[,18], col="blue")
+lines(1:62, sCON27HourW[,36], col="green")
+
+
+
+# sPH25, sPH29, sPH30, sPH27, sPH35, sPH43, sPH33, sPH11, sPH22, sPH17, sPH31, sPH26, sPH14, sPH19,  sPH12, sPH49, sPH20, sPH36
+
+plot(range(1:62), range(c(sCON35HourW[,1],sCON35HourW[,18], sCON35HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sCON35HourW[,1], col="red")
+lines(1:62, sCON35HourW[,18], col="blue")
+lines(1:62, sCON35HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sCON43HourW[,1],sCON43HourW[,18], sCON43HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sCON43HourW[,1], col="red")
+lines(1:62, sCON43HourW[,18], col="blue")
+lines(1:62, sCON43HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sCON33HourW[,1],sCON33HourW[,18], sCON33HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sCON33HourW[,1], col="red")
+lines(1:62, sCON33HourW[,18], col="blue")
+lines(1:62, sCON33HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sCON11HourW[,1],sCON11HourW[,18], sCON11HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sCON11HourW[,1], col="red")
+lines(1:62, sCON11HourW[,18], col="blue")
+lines(1:62, sCON11HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sCON22HourW[,1],sCON22HourW[,18], sCON22HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sCON22HourW[,1], col="red")
+lines(1:62, sCON22HourW[,18], col="blue")
+lines(1:62, sCON22HourW[,36], col="green")
+
+# sPH25, sPH29, sPH30, sPH27, sPH35, sPH43, sPH33, sPH11, sPH22, sPH17, sPH31, sPH26, sPH14, sPH19,  sPH12, sPH49, sPH20, sPH36
+
+plot(range(1:62), range(c(sCON17HourW[,1],sCON17HourW[,18], sCON17HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sCON17HourW[,1], col="red")
+lines(1:62, sCON17HourW[,18], col="blue")
+lines(1:62, sCON17HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sCON31HourW[,1],sCON31HourW[,18], sCON31HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sCON31HourW[,1], col="red")
+lines(1:62, sCON31HourW[,18], col="blue")
+lines(1:62, sCON31HourW[,36], col="green")
+
+
+
+
+plot(range(1:62), range(c(sCON26HourW[,1],sCON26HourW[,18], sCON26HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sCON26HourW[,1], col="red")
+lines(1:62, sCON26HourW[,18], col="blue")
+lines(1:62, sCON26HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sCON14HourW[,1],sCON14HourW[,18], sCON14HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sCON14HourW[,1], col="red")
+lines(1:62, sCON14HourW[,18], col="blue")
+lines(1:62, sCON14HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sCON19HourW[,1],sCON19HourW[,18], sCON19HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sCON19HourW[,1], col="red")
+lines(1:62, sCON19HourW[,18], col="blue")
+lines(1:62, sCON19HourW[,36], col="green")
+
+
+# sPH25, sPH29, sPH30, sPH27, sPH35, sPH43, sPH33, sPH11, sPH22, sPH17, sPH31, sPH26, sPH14, sPH19,  sPH12, sPH49, sPH20, sPH36
+
+plot(range(1:62), range(c(sCON12HourW[,1],sCON12HourW[,18], sCON12HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sCON12HourW[,1], col="red")
+lines(1:62, sCON12HourW[,18], col="blue")
+lines(1:62, sCON12HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sCON49HourW[,1],sCON49HourW[,18], sCON49HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sCON49HourW[,1], col="red")
+lines(1:62, sCON49HourW[,18], col="blue")
+lines(1:62, sCON49HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sCON20HourW[,1],sCON20HourW[,18], sCON20HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sCON20HourW[,1], col="red")
+lines(1:62, sCON20HourW[,18], col="blue")
+lines(1:62, sCON20HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sCON36HourW[,1],sCON36HourW[,18], sCON36HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sCON36HourW[,1], col="red")
+lines(1:62, sCON36HourW[,18], col="blue")
+lines(1:62, sCON36HourW[,36], col="green")
+
+
+
+
+```
+## Compned plot ORP
+```{r}
+plot(range(1:62), range(c(sORP25HourW[,1],sORP25HourW[,18], sORP25HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sORP25HourW[,1], col="red")
+lines(1:62, sORP25HourW[,18], col="blue")
+lines(1:62, sORP25HourW[,36], col="green")
+
+
+plot(range(1:62), range(c(sORP29HourW[,1],sORP29HourW[,18], sORP29HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sORP29HourW[,1], col="red")
+lines(1:62, sORP29HourW[,18], col="blue")
+lines(1:62, sORP29HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sORP30HourW[,1],sORP30HourW[,18], sORP30HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sORP30HourW[,1], col="red")
+lines(1:62, sORP30HourW[,18], col="blue")
+lines(1:62, sORP30HourW[,36], col="green")
+
+
+
+
+
+plot(range(1:62), range(c(sORP27HourW[,1],sORP27HourW[,18], sORP27HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sORP27HourW[,1], col="red")
+lines(1:62, sORP27HourW[,18], col="blue")
+lines(1:62, sORP27HourW[,36], col="green")
+
+
+
+# sPH25, sPH29, sPH30, sPH27, sPH35, sPH43, sPH33, sPH11, sPH22, sPH17, sPH31, sPH26, sPH14, sPH19,  sPH12, sPH49, sPH20, sPH36
+
+plot(range(1:62), range(c(sORP35HourW[,1],sORP35HourW[,18], sORP35HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sORP35HourW[,1], col="red")
+lines(1:62, sORP35HourW[,18], col="blue")
+lines(1:62, sORP35HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sORP43HourW[,1],sORP43HourW[,18], sORP43HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sORP43HourW[,1], col="red")
+lines(1:62, sORP43HourW[,18], col="blue")
+lines(1:62, sORP43HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sORP33HourW[,1],sORP33HourW[,18], sORP33HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sORP33HourW[,1], col="red")
+lines(1:62, sORP33HourW[,18], col="blue")
+lines(1:62, sORP33HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sORP11HourW[,1],sORP11HourW[,18], sORP11HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sORP11HourW[,1], col="red")
+lines(1:62, sORP11HourW[,18], col="blue")
+lines(1:62, sORP11HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sORP22HourW[,1],sORP22HourW[,18], sORP22HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sORP22HourW[,1], col="red")
+lines(1:62, sORP22HourW[,18], col="blue")
+lines(1:62, sORP22HourW[,36], col="green")
+
+# sPH25, sPH29, sPH30, sPH27, sPH35, sPH43, sPH33, sPH11, sPH22, sPH17, sPH31, sPH26, sPH14, sPH19,  sPH12, sPH49, sPH20, sPH36
+
+plot(range(1:62), range(c(sORP17HourW[,1],sORP17HourW[,18], sORP17HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sORP17HourW[,1], col="red")
+lines(1:62, sORP17HourW[,18], col="blue")
+lines(1:62, sORP17HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sORP31HourW[,1],sORP31HourW[,18], sORP31HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sORP31HourW[,1], col="red")
+lines(1:62, sORP31HourW[,18], col="blue")
+lines(1:62, sORP31HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sORP26HourW[,1],sORP26HourW[,18], sORP26HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sORP26HourW[,1], col="red")
+lines(1:62, sORP26HourW[,18], col="blue")
+lines(1:62, sORP26HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sORP14HourW[,1],sORP14HourW[,18], sORP14HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sORP14HourW[,1], col="red")
+lines(1:62, sORP14HourW[,18], col="blue")
+lines(1:62, sORP14HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sORP19HourW[,1],sORP19HourW[,18], sORP19HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sORP19HourW[,1], col="red")
+lines(1:62, sORP19HourW[,18], col="blue")
+lines(1:62, sORP19HourW[,36], col="green")
+
+
+# sPH25, sPH29, sPH30, sPH27, sPH35, sPH43, sPH33, sPH11, sPH22, sPH17, sPH31, sPH26, sPH14, sPH19,  sPH12, sPH49, sPH20, sPH36
+
+plot(range(1:62), range(c(sORP12HourW[,1],sORP12HourW[,18], sORP12HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sORP12HourW[,1], col="red")
+lines(1:62, sORP12HourW[,18], col="blue")
+lines(1:62, sORP12HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sORP49HourW[,1],sORP49HourW[,18], sORP49HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sORP49HourW[,1], col="red")
+lines(1:62, sORP49HourW[,18], col="blue")
+lines(1:62, sORP49HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sORP20HourW[,1],sORP20HourW[,18], sORP20HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sORP20HourW[,1], col="red")
+lines(1:62, sORP20HourW[,18], col="blue")
+lines(1:62, sORP20HourW[,36], col="green")
+
+
+
+plot(range(1:62), range(c(sORP36HourW[,1],sORP36HourW[,18], sORP36HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:62, sORP36HourW[,1], col="red")
+lines(1:62, sORP36HourW[,18], col="blue")
+lines(1:62, sORP36HourW[,36], col="green")
+
+
+```
+# Combined plot PH
+```{r}
+
+plot(range(1:61), range(c(sPH25HourW[,1],sPH25HourW[,18], sPH25HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:61, sPH25HourW[,1], col="red")
+lines(1:61, sPH25HourW[,18], col="blue")
+lines(1:61, sPH25HourW[,36], col="green")
+
+
+plot(range(1:61), range(c(sPH29HourW[,1],sPH29HourW[,18], sPH29HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:61, sPH29HourW[,1], col="red")
+lines(1:61, sPH29HourW[,18], col="blue")
+lines(1:61, sPH29HourW[,36], col="green")
+
+
+
+plot(range(1:61), range(c(sPH30HourW[,1],sPH30HourW[,18], sPH30HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:61, sPH30HourW[,1], col="red")
+lines(1:61, sPH30HourW[,18], col="blue")
+lines(1:61, sPH30HourW[,36], col="green")
+
+
+
+
+
+plot(range(1:61), range(c(sPH27HourW[,1],sPH27HourW[,18], sPH27HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:61, sPH27HourW[,1], col="red")
+lines(1:61, sPH27HourW[,18], col="blue")
+lines(1:61, sPH27HourW[,36], col="green")
+
+
+
+# sPH25, sPH29, sPH30, sPH27, sPH35, sPH43, sPH33, sPH11, sPH22, sPH17, sPH31, sPH26, sPH14, sPH19,  sPH12, sPH49, sPH20, sPH36
+
+plot(range(1:61), range(c(sPH35HourW[,1],sPH35HourW[,18], sPH35HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:61, sPH35HourW[,1], col="red")
+lines(1:61, sPH35HourW[,18], col="blue")
+lines(1:61, sPH35HourW[,36], col="green")
+
+
+
+plot(range(1:61), range(c(sPH43HourW[,1],sPH43HourW[,18], sPH43HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:61, sPH43HourW[,1], col="red")
+lines(1:61, sPH43HourW[,18], col="blue")
+lines(1:61, sPH43HourW[,36], col="green")
+
+
+
+plot(range(1:61), range(c(sPH33HourW[,1],sPH33HourW[,18], sPH33HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:61, sPH33HourW[,1], col="red")
+lines(1:61, sPH33HourW[,18], col="blue")
+lines(1:61, sPH33HourW[,36], col="green")
+
+
+
+plot(range(1:61), range(c(sPH11HourW[,1],sPH11HourW[,18], sPH11HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:61, sPH11HourW[,1], col="red")
+lines(1:61, sPH11HourW[,18], col="blue")
+lines(1:61, sPH11HourW[,36], col="green")
+
+
+
+plot(range(1:61), range(c(sPH22HourW[,1],sPH22HourW[,18], sPH22HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:61, sPH22HourW[,1], col="red")
+lines(1:61, sPH22HourW[,18], col="blue")
+lines(1:61, sPH22HourW[,36], col="green")
+
+# sPH25, sPH29, sPH30, sPH27, sPH35, sPH43, sPH33, sPH11, sPH22, sPH17, sPH31, sPH26, sPH14, sPH19,  sPH12, sPH49, sPH20, sPH36
+
+plot(range(1:61), range(c(sPH17HourW[,1],sPH17HourW[,18], sPH17HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:61, sPH17HourW[,1], col="red")
+lines(1:61, sPH17HourW[,18], col="blue")
+lines(1:61, sPH17HourW[,36], col="green")
+
+
+
+plot(range(1:61), range(c(sPH31HourW[,1],sPH31HourW[,18], sPH31HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:61, sPH31HourW[,1], col="red")
+lines(1:61, sPH31HourW[,18], col="blue")
+lines(1:61, sPH31HourW[,36], col="green")
+
+
+
+
+plot(range(1:61), range(c(sPH26HourW[,1],sPH26HourW[,18], sPH26HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:61, sPH26HourW[,1], col="red")
+lines(1:61, sPH26HourW[,18], col="blue")
+lines(1:61, sPH26HourW[,36], col="green")
+
+
+
+plot(range(1:61), range(c(sPH14HourW[,1],sPH14HourW[,18], sPH14HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:61, sPH14HourW[,1], col="red")
+lines(1:61, sPH14HourW[,18], col="blue")
+lines(1:61, sPH14HourW[,36], col="green")
+
+
+
+plot(range(1:61), range(c(sPH19HourW[,1],sPH19HourW[,18], sPH19HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:61, sPH19HourW[,1], col="red")
+lines(1:61, sPH19HourW[,18], col="blue")
+lines(1:61, sPH19HourW[,36], col="green")
+
+
+# sPH25, sPH29, sPH30, sPH27, sPH35, sPH43, sPH33, sPH11, sPH22, sPH17, sPH31, sPH26, sPH14, sPH19,  sPH12, sPH49, sPH20, sPH36
+
+plot(range(1:61), range(c(sPH12HourW[,1],sPH12HourW[,18], sPH12HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:61, sPH12HourW[,1], col="red")
+lines(1:61, sPH12HourW[,18], col="blue")
+lines(1:61, sPH12HourW[,36], col="green")
+
+
+
+plot(range(1:61), range(c(sPH49HourW[,1],sPH49HourW[,18], sPH49HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:61, sPH49HourW[,1], col="red")
+lines(1:61, sPH49HourW[,18], col="blue")
+lines(1:61, sPH49HourW[,36], col="green")
+
+
+
+plot(range(1:61), range(c(sPH20HourW[,1],sPH20HourW[,18], sPH20HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:61, sPH20HourW[,1], col="red")
+lines(1:61, sPH20HourW[,18], col="blue")
+lines(1:61, sPH20HourW[,36], col="green")
+
+
+
+plot(range(1:61), range(c(sPH36HourW[,1],sPH36HourW[,18], sPH36HourW[,36]), na.rm=TRUE), type='n')
+legend("topright", lty=c(1,1), col=c("red","blue", "green"), legend=c("1", "18", "36"))
+
+lines(1:61, sPH36HourW[,1], col="red")
+lines(1:61, sPH36HourW[,18], col="blue")
+lines(1:61, sPH36HourW[,36], col="green")
+
+
+
+```
+
+
+
